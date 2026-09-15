@@ -1,0 +1,450 @@
+====================================
+exec cics send map with literal - names invented and neutral
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND MAP('MENU01') END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (MAP)
+        (cics_map_name
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics d-18 keyword extraction proof - names invented and neutral
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS READ END-EXEC.
+       EXEC CICS WRITE END-EXEC.
+       EXEC CICS DELETE END-EXEC.
+       EXEC CICS RETURN END-EXEC.
+       READ CUSTOMER-FILE.
+       WRITE CUSTOMER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (END_EXEC))
+      (period)
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (END_EXEC))
+      (period)
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (END_EXEC))
+      (period)
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (END_EXEC))
+      (period)
+      (read_statement
+        file_name: (WORD))
+      (period)
+      (write_statement
+        record_name: (qualified_word
+          (WORD)))
+      (period))))
+
+====================================
+exec cics no-option shape
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS RETURN END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics lowercase spelling
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       exec cics send map('MENU01') end-exec.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (MAP)
+        (cics_map_name
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics option with plain data name argument
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS LINK PROGRAM(WS-PROG-NAME) END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (PROGRAM)
+        (cics_program_name
+          (WORD))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics option with length of argument
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND FROM(WS-BUF) LENGTH(LENGTH OF WS-BUF) END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (WORD)
+        (WORD)
+        (WORD)
+        (WORD)
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics option with numeric literal argument
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND LENGTH(80) END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (WORD)
+        (number
+          (integer))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics bare option with no parentheses
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND ERASE END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (WORD)
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics unmodelled content lands in unparsed tail
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND 'RAWTEXT' END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (cics_unparsed_tail
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics unparsed tail does not absorb the terminator
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND MAP('M1') 99 END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (MAP)
+        (cics_map_name
+          (string))
+        (cics_unparsed_tail
+          (number
+            (integer)))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics nested subscript argument
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND FROM(WS-TAB(1)) END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (WORD)
+        (WORD)
+        (number
+          (integer))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics transid operand
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS START TRANSID('TRN1') END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (TRANSID)
+        (cics_transaction_name
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics program operand as data name
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS LINK PROGRAM(WS-PROG-NAME) END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (PROGRAM)
+        (cics_program_name
+          (WORD))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics program operand as quoted literal
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS LINK PROGRAM('SUBPROG1') END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (PROGRAM)
+        (cics_program_name
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics map and mapset operands
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS SEND MAP('MENU01') MAPSET('MENUSET') END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (MAP)
+        (cics_map_name
+          (string))
+        (MAPSET)
+        (cics_mapset_name
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec cics multi-line block
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC CICS
+           SEND MAP('MENU01')
+           MAPSET('MENUSET')
+       END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_cics_statement
+        (EXEC)
+        (CICS)
+        command: (WORD)
+        (MAP)
+        (cics_map_name
+          (string))
+        (MAPSET)
+        (cics_mapset_name
+          (string))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql recovery preserves following cobol boundary
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL SELECT COL1 INTO :WS-COL1 FROM TAB1 END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)))))
+        (END_EXEC))
+      (period))))

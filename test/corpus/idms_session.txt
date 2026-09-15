@@ -1,0 +1,216 @@
+====================================
+idms session bind run-unit
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       BIND RUN-UNIT.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (BIND)
+        (RUN_UNIT))
+      (period))))
+
+====================================
+idms session bind record
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       BIND CUSTOMER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (BIND)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms session ready usage mode
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       READY CUST-AREA USAGE-MODE IS UPDATE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (READY)
+        (idms_record_name
+          (WORD))
+        (USAGE_MODE)
+        (IS)
+        (UPDATE))
+      (period))))
+
+====================================
+idms session ready bare
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       READY.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (READY))
+      (period))))
+
+====================================
+idms session finish task
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FINISH TASK.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (FINISH)
+        (TASK))
+      (period))))
+
+====================================
+idms session finish bare
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FINISH.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (FINISH))
+      (period))))
+
+====================================
+idms session commit task all
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       COMMIT TASK ALL.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (COMMIT)
+        (TASK)
+        (ALL))
+      (period))))
+
+====================================
+idms session commit bare
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       COMMIT.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (COMMIT))
+      (period))))
+
+====================================
+idms session rollback continue
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       ROLLBACK CONTINUE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (ROLLBACK)
+        (CONTINUE))
+      (period))))
+
+====================================
+idms session bind dbname
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       BIND RUN-UNIT DBNAME CUSTOMER-DB.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (BIND)
+        (RUN_UNIT)
+        (DBNAME)
+        (WORD))
+      (period))))
+
+====================================
+idms session unparsed tail
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       BIND RUN-UNIT USING CUST-CTRL-BLOCK.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_session_statement
+        verb: (BIND)
+        (RUN_UNIT)
+        (idms_unparsed_tail
+          (WORD)
+          (WORD)))
+      (period))))

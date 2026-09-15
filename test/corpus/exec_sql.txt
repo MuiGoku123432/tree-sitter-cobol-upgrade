@@ -1,0 +1,949 @@
+====================================
+exec sql select with qualified table and separate alias
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL SELECT CUST-ID FROM APP.CUSTOMER AS C END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD))
+              (sql_table_alias
+                (WORD)))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql census discovered identifier cursor and ddl forms
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL DECLARE C_1 CURSOR FOR
+           SELECT EMP_NO FROM APP.EMP_TABLE
+           WHERE EMP_NO != :HOST_REC.EMP_NO END-EXEC.
+       EXEC SQL INSERT INTO APP.EMP_TABLE VALUES
+           (:HOST_REC.EMP_NO) END-EXEC.
+       EXEC SQL CREATE TABLE IF NOT EXISTS APP.NEW_TABLE END-EXEC.
+       EXEC SQL DROP TABLE IF EXISTS APP.OLD_TABLE END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_declare_cursor_statement
+          (WORD)
+          (WORD)
+          (WORD)
+          (sql_select_query
+            (WORD)
+            (sql_unparsed_tail)
+            (sql_source_reference
+              (sql_source_candidate
+                (sql_table_name
+                  (WORD))))
+            (sql_unparsed_tail
+              (WORD))
+            (sql_unparsed_tail)
+            (sql_unparsed_tail)
+            (sql_unparsed_tail)
+            (sql_unparsed_tail)))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_insert_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail)
+          (sql_unparsed_tail)
+          (sql_unparsed_tail))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_create_table_statement
+          (WORD)
+          (WORD)
+          (WORD)
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD))))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_drop_table_statement
+          (WORD)
+          (WORD)
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql cte only outer source
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL WITH RECENT AS
+           (SELECT ID FROM ARCHIVE.EVENTS)
+           SELECT ID FROM RECENT END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_cte_clause
+          (sql_cte_definition
+            (sql_cte_name
+              (WORD))
+            (sql_select_query
+              (WORD)
+              (sql_unparsed_tail
+                (WORD))
+              (sql_source_reference
+                (sql_source_candidate
+                  (sql_table_name
+                    (WORD)
+                    (WORD)))))))
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql cte body physical join
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL WITH RECENT AS
+           (SELECT ID FROM ARCHIVE.EVENTS JOIN CORE.ACCOUNTS AS A)
+           SELECT ID FROM RECENT END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_cte_clause
+          (sql_cte_definition
+            (sql_cte_name
+              (WORD))
+            (sql_select_query
+              (WORD)
+              (sql_unparsed_tail
+                (WORD))
+              (sql_source_reference
+                (sql_source_candidate
+                  (sql_table_name
+                    (WORD)
+                    (WORD))))
+              (sql_source_reference
+                (sql_source_candidate
+                  (sql_table_name
+                    (WORD)
+                    (WORD))
+                  (sql_table_alias
+                    (WORD)))))))
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql outer cte plus physical table
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL WITH RECENT AS
+           (SELECT ID FROM ARCHIVE.EVENTS)
+           SELECT ID FROM RECENT JOIN CORE.ACCOUNTS END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_cte_clause
+          (sql_cte_definition
+            (sql_cte_name
+              (WORD))
+            (sql_select_query
+              (WORD)
+              (sql_unparsed_tail
+                (WORD))
+              (sql_source_reference
+                (sql_source_candidate
+                  (sql_table_name
+                    (WORD)
+                    (WORD)))))))
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD))))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD)))))
+        (END_EXEC))
+      (period))))
+
+====================================
+adjacent exec sql statements reuse cte name
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL WITH ITEMS AS
+           (SELECT ID FROM REGION.ONE)
+           SELECT ID FROM ITEMS END-EXEC.
+       EXEC SQL WITH ITEMS AS
+           (SELECT ID FROM REGION.TWO)
+           SELECT ID FROM ITEMS END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_cte_clause
+          (sql_cte_definition
+            (sql_cte_name
+              (WORD))
+            (sql_select_query
+              (WORD)
+              (sql_unparsed_tail
+                (WORD))
+              (sql_source_reference
+                (sql_source_candidate
+                  (sql_table_name
+                    (WORD)
+                    (WORD)))))))
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)))))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_cte_clause
+          (sql_cte_definition
+            (sql_cte_name
+              (WORD))
+            (sql_select_query
+              (WORD)
+              (sql_unparsed_tail
+                (WORD))
+              (sql_source_reference
+                (sql_source_candidate
+                  (sql_table_name
+                    (WORD)
+                    (WORD)))))))
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql nested source and three part name
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL SELECT ID FROM (SELECT ID FROM LOC.CAT.ORDERS)
+           AS D END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_nested_query
+              (sql_select_query
+                (WORD)
+                (sql_unparsed_tail
+                  (WORD))
+                (sql_source_reference
+                  (sql_source_candidate
+                    (sql_table_name
+                      (WORD)
+                      (WORD)
+                      (WORD)))))
+              (sql_table_alias
+                (WORD)))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql delimited table name lowercase multiline and unsupported tail
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       exec sql
+           select amount
+           from "Sales Space"."Order Log" as o
+           where amount > 0
+       end-exec.
+       next-para.
+           continue.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (sql_delimited_identifier)
+                (sql_delimited_identifier))
+              (sql_table_alias
+                (WORD))))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail)
+          (sql_unparsed_tail
+            (number
+              (integer))))
+        (END_EXEC))
+      (period)
+      (paragraph_header)
+      (continue_statement)
+      (period))))
+
+====================================
+exec sql empty source utility and cobol keyword collisions
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL COMMIT WORK END-EXEC.
+       DELETE CUSTOMER-FILE.
+       MERGE SORT-FILE ON ASCENDING KEY SORT-KEY USING INPUT-FILE
+           GIVING OUTPUT-FILE.
+       ALTER OLD-PARA TO PROCEED TO NEW-PARA.
+       OPEN INPUT INPUT-FILE.
+       CLOSE INPUT-FILE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (WORD)
+        (sql_unparsed_tail
+          (WORD))
+        (END_EXEC))
+      (period)
+      (delete_statement
+        (WORD))
+      (period)
+      (merge_statement
+        (qualified_word
+          (WORD))
+        (sort_key
+          (ASCENDING)
+          (qualified_word
+            (WORD)))
+        (sort_input_using
+          (WORD))
+        (sort_output_giving
+          (WORD)))
+      (period)
+      (alter_statement
+        (alter_option
+          (qualified_word
+            (WORD))
+          (TO)
+          (PROCEED)
+          (TO)
+          (qualified_word
+            (WORD))))
+      (period)
+      (open_statement
+        (open_arg
+          (INPUT)
+          (WORD)))
+      (period)
+      (close_statement
+        (close_arg
+          (WORD)))
+      (period))))
+
+====================================
+exec sql declare markers preserve working-storage data siblings
+====================================
+       identification division.
+       program-id. a.
+       data division.
+       working-storage section.
+       01 BEFORE-FIELD PIC X.
+       EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+       01 DECLARED-FIELD PIC X.
+       EXEC SQL END DECLARE SECTION END-EXEC.
+       01 AFTER-FIELD PIC X.
+       procedure division.
+           continue.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (data_division
+      (working_storage_section
+        (data_description
+          (level_number)
+          (entry_name)
+          (picture_clause
+            (picture_x)))
+        (exec_sql_declare_section
+          (EXEC)
+          (SQL)
+          (WORD)
+          (WORD)
+          (WORD)
+          (END_EXEC))
+        (data_description
+          (level_number)
+          (entry_name)
+          (picture_clause
+            (picture_x)))
+        (exec_sql_declare_section
+          (EXEC)
+          (SQL)
+          (WORD)
+          (WORD)
+          (WORD)
+          (END_EXEC))
+        (data_description
+          (level_number)
+          (entry_name)
+          (picture_clause
+            (picture_x)))))
+    (procedure_division
+      (continue_statement)
+      (period))))
+
+====================================
+exec sql declare markers preserve shared record-list data siblings
+====================================
+       identification division.
+       program-id. a.
+       data division.
+       local-storage section.
+       01 LOCAL-BEFORE PIC X.
+       EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+       01 LOCAL-DECLARED PIC X.
+       EXEC SQL END DECLARE SECTION END-EXEC.
+       01 LOCAL-AFTER PIC X.
+       linkage section.
+       01 LINK-BEFORE PIC X.
+       EXEC SQL BEGIN DECLARE SECTION END-EXEC.
+       01 LINK-DECLARED PIC X.
+       EXEC SQL END DECLARE SECTION END-EXEC.
+       01 LINK-AFTER PIC X.
+       procedure division.
+           continue.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (data_division
+      (local_storage_section
+        (record_description_list
+          (data_description
+            (level_number)
+            (entry_name)
+            (picture_clause
+              (picture_x)))
+          (exec_sql_declare_section
+            (EXEC)
+            (SQL)
+            (WORD)
+            (WORD)
+            (WORD)
+            (END_EXEC))
+          (data_description
+            (level_number)
+            (entry_name)
+            (picture_clause
+              (picture_x)))
+          (exec_sql_declare_section
+            (EXEC)
+            (SQL)
+            (WORD)
+            (WORD)
+            (WORD)
+            (END_EXEC))
+          (data_description
+            (level_number)
+            (entry_name)
+            (picture_clause
+              (picture_x)))))
+      (linkage_section
+        (record_description_list
+          (data_description
+            (level_number)
+            (entry_name)
+            (picture_clause
+              (picture_x)))
+          (exec_sql_declare_section
+            (EXEC)
+            (SQL)
+            (WORD)
+            (WORD)
+            (WORD)
+            (END_EXEC))
+          (data_description
+            (level_number)
+            (entry_name)
+            (picture_clause
+              (picture_x)))
+          (exec_sql_declare_section
+            (EXEC)
+            (SQL)
+            (WORD)
+            (WORD)
+            (WORD)
+            (END_EXEC))
+          (data_description
+            (level_number)
+            (entry_name)
+            (picture_clause
+              (picture_x))))))
+    (procedure_division
+      (continue_statement)
+      (period))))
+
+====================================
+exec sql generic includes preserve data and procedure siblings
+====================================
+       identification division.
+       program-id. a.
+       data division.
+       working-storage section.
+       01 DATA-BEFORE PIC X.
+       EXEC SQL INCLUDE SQLCA END-EXEC.
+       01 DATA-AFTER PIC X.
+       procedure division.
+       EXEC SQL INCLUDE TEAM-MEMBER END-EXEC.
+           continue.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (data_division
+      (working_storage_section
+        (data_description
+          (level_number)
+          (entry_name)
+          (picture_clause
+            (picture_x)))
+        (exec_sql_include
+          (EXEC)
+          (SQL)
+          (WORD)
+          (sql_include_name
+            (WORD))
+          (END_EXEC))
+        (data_description
+          (level_number)
+          (entry_name)
+          (picture_clause
+            (picture_x)))))
+    (procedure_division
+      (exec_sql_include
+        (EXEC)
+        (SQL)
+        (WORD)
+        (sql_include_name
+          (WORD))
+        (END_EXEC))
+      (period)
+      (continue_statement)
+      (period))))
+
+====================================
+exec sql prepare dynamic source and bounded later anchor
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL PREPARE STMT FROM :SQL-TEXT END-EXEC.
+       EXEC SQL SELECT ODD TOKENS FROM APP.LATE-TABLE END-EXEC.
+       next-para.
+           continue.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_prepare_statement
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (WORD)
+          (sql_dynamic_source
+            (WORD)))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD)))))
+        (END_EXEC))
+      (period)
+      (paragraph_header)
+      (continue_statement)
+      (period))))
+
+====================================
+exec sql static dml and ddl table forms
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL INSERT INTO APP.ORDERS VALUES (1) END-EXEC.
+       EXEC SQL UPDATE APP.CUSTOMER AS C SET FLAG = 1 END-EXEC.
+       EXEC SQL DELETE FROM APP.ARCHIVE WHERE FLAG = 0 END-EXEC.
+       EXEC SQL MERGE INTO APP.TARGET AS T
+           USING STAGE.SOURCE AS S ON T-ID = S-ID
+       END-EXEC.
+       EXEC SQL CREATE TABLE APP.NEW-TABLE END-EXEC.
+       EXEC SQL ALTER TABLE APP.NEW-TABLE ADD FLAG END-EXEC.
+       EXEC SQL DROP TABLE APP.OLD-TABLE END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_insert_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD)))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail)
+          (sql_unparsed_tail
+            (number
+              (integer)))
+          (sql_unparsed_tail))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_update_statement
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD))
+            (sql_table_alias
+              (WORD)))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail)
+          (sql_unparsed_tail
+            (number
+              (integer))))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_delete_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD)))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail)
+          (sql_unparsed_tail
+            (number
+              (integer))))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_merge_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD))
+            (sql_table_alias
+              (WORD)))
+          (sql_using_reference
+            (WORD)
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD))
+              (sql_table_alias
+                (WORD))))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail)
+          (sql_unparsed_tail
+            (WORD)))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_create_table_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD))))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_alter_table_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD)))
+          (sql_unparsed_tail
+            (WORD))
+          (sql_unparsed_tail
+            (WORD)))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_drop_table_statement
+          (WORD)
+          (WORD)
+          (sql_source_candidate
+            (sql_table_name
+              (WORD)
+              (WORD))))
+        (END_EXEC))
+      (period))))
+
+====================================
+exec sql multiple nested and duplicate static sources
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       EXEC SQL SELECT ID FROM APP.ONE JOIN APP.TWO AS T
+           JOIN APP.ONE END-EXEC.
+       EXEC SQL SELECT ID FROM (SELECT ID FROM APP.NESTED) AS D
+           JOIN APP.OUTER END-EXEC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD))))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD))
+              (sql_table_alias
+                (WORD))))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD)))))
+        (END_EXEC))
+      (period)
+      (exec_sql_statement
+        (EXEC)
+        (SQL)
+        (sql_select_query
+          (WORD)
+          (sql_unparsed_tail
+            (WORD))
+          (sql_source_reference
+            (sql_nested_query
+              (sql_select_query
+                (WORD)
+                (sql_unparsed_tail
+                  (WORD))
+                (sql_source_reference
+                  (sql_source_candidate
+                    (sql_table_name
+                      (WORD)
+                      (WORD)))))
+              (sql_table_alias
+                (WORD))))
+          (sql_source_reference
+            (sql_source_candidate
+              (sql_table_name
+                (WORD)
+                (WORD)))))
+        (END_EXEC))
+      (period))))

@@ -1,0 +1,111 @@
+#!/bin/bash
+# .githooks/pre-push
+#
+# Enforcement point for FORK-02 (estate-leak guard) and FORK-03 (commit
+# separability) -- D-17: pre-push is the last moment before source leaves
+# this machine for a public remote, unlike a CI check, which fires only
+# after the push has already reached GitHub (detection, not prevention).
+#
+# Install (once per clone): git config core.hooksPath .githooks
+#
+# Known residual limitation: `git push --no-verify` bypasses this hook
+# entirely, by git's own design. No server-side backstop is in scope for
+# this phase (see docs/vendoring.md for the same statement carried into the
+# fork's documentation).
+#
+# WR-13: estate-guard-selftest.sh runs on every push, before the guard, so a
+# future regression in the guard's own checks cannot ship silently -- it is
+# the only automated evidence that the leak guard has teeth, given the
+# --no-verify bypass above already has no server-side backstop. Measured
+# cost on this machine: ~2 seconds for the full 15-case-plus-two-real-repo-
+# check suite (six regression cases heavier than the ~1.22s pre-strengthening
+# baseline), against a network push that already costs seconds. Alternatives
+# considered and rejected: a documented manual cadence relies on a human
+# remembering, which is what already failed here (see 01-REVIEW.md); a CI
+# check fires only after the push has already reached GitHub, which is
+# detection rather than prevention -- the exact reasoning D-17 used to choose
+# pre-push over CI in the first place.
+#
+# Emergency escape hatch: SKIP_GUARD_SELFTEST=1 git push ... skips the
+# self-test for one push. Setting it disables the only automated evidence
+# that the guard has teeth -- use it only for a genuine emergency, never as a
+# routine habit.
+
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+ESTATE_GUARD="$HOOK_DIR/estate-guard.sh"
+SEPARABILITY_GUARD="$HOOK_DIR/commit-separability.sh"
+SELFTEST="$HOOK_DIR/estate-guard-selftest.sh"
+
+SELFTEST_OUT_FILE="$(mktemp)"
+SEP_FAIL_FILE="$(mktemp)"
+trap 'rm -f "$SELFTEST_OUT_FILE" "$SEP_FAIL_FILE"' EXIT INT TERM
+
+FAIL=0
+
+# --- Self-test: re-prove the guard's own checks before trusting its verdict
+# on this push (WR-13). Runs before the guard itself, so a regressed guard
+# is caught before its verdict on this push is trusted. ---
+if [ -n "$SKIP_GUARD_SELFTEST" ]; then
+    echo "pre-push: SKIP_GUARD_SELFTEST is set -- skipping estate-guard's self-test for this push. This disables the only automated evidence that the leak guard has teeth."
+else
+    bash "$SELFTEST" > "$SELFTEST_OUT_FILE" 2>&1
+    if [ $? -ne 0 ]; then
+        echo "pre-push: FAIL - estate-guard's self-test did not pass; the leak guard is not trustworthy"
+        cat "$SELFTEST_OUT_FILE"
+        FAIL=1
+    fi
+fi
+
+echo "pre-push: running estate-guard.sh and commit-separability.sh"
+
+STDIN_DATA="$(cat)"
+
+# --- Estate-leak guard: feed it the whole ref-update stdin in its default
+# mode (it parses the "<local ref> <local sha> <remote ref> <remote sha>"
+# protocol itself, including the zero-lines case). Git supplies the remote
+# name as this hook's first argument ($1) and its URL as the second ($2);
+# forward the remote name so the guard's new-branch bound can be scoped to
+# the remote actually being pushed to (CR-04) -- do not drop this forwarding
+# as apparently unused. ---
+if [ -n "$STDIN_DATA" ]; then
+    printf '%s\n' "$STDIN_DATA" | "$ESTATE_GUARD" --remote "$1"
+else
+    "$ESTATE_GUARD" --remote "$1" < /dev/null
+fi
+if [ $? -ne 0 ]; then
+    FAIL=1
+fi
+
+# --- Commit-separability guard: compute the same per-ref-update ranges git
+# handed us and run the check over each. An empty ref-update list (nothing
+# to push, e.g. only a ref deletion) is a valid, non-error push shape.
+# SEP_FAIL_FILE was already created and trapped for cleanup above, alongside
+# SELFTEST_OUT_FILE. ---
+if [ -n "$STDIN_DATA" ]; then
+    printf '%s\n' "$STDIN_DATA" | while IFS=' ' read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
+        [ -z "$LOCAL_REF" ] && continue
+        case "$LOCAL_SHA" in
+            0000000000000000000000000000000000000000)
+                # branch deletion: nothing is being pushed for this line.
+                continue
+                ;;
+        esac
+        case "$REMOTE_SHA" in
+            0000000000000000000000000000000000000000)
+                # New branch: let commit-separability.sh's own default-range
+                # resolution (upstream/main..HEAD, or its documented
+                # fallback) apply.
+                "$SEPARABILITY_GUARD" || echo fail >> "$SEP_FAIL_FILE"
+                ;;
+            *)
+                "$SEPARABILITY_GUARD" --range "${REMOTE_SHA}..${LOCAL_SHA}" || echo fail >> "$SEP_FAIL_FILE"
+                ;;
+        esac
+    done
+fi
+
+if [ -s "$SEP_FAIL_FILE" ]; then
+    FAIL=1
+fi
+
+exit $FAIL
