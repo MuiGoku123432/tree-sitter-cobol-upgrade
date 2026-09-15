@@ -1,0 +1,33 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v0.25.0",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Delivery Pipe & Measurement Baseline",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "IDMS DML Statement Nodes",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "EXEC CICS Blocks",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "EXEC SQL Blocks",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:discuss-phase 3",
+    "label": "Start Phase 3 (EXEC CICS Blocks)",
+    "reason": "Phase 2 complete · IDMS-05 outstanding as mis-specified, re-scope during Phase 3 planning"
+  },
+  "updated_at": "2026-09-04T19:15:00.000Z"
+}

@@ -1,0 +1,41 @@
+{
+  "source_path": "<repo-root>/docs/spec/SPEC-001-nodes-for-edges.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "SPEC-001 — COBOL grammar: nodes for edges",
+  "summary": "Specifies extending the forked COBOL tree-sitter grammar so IDMS DML, EXEC CICS, and EXEC SQL operands parse into named, walkable AST nodes.",
+  "scope": [
+    "tree-sitter COBOL grammar",
+    "grammar.js",
+    "IDMS DML",
+    "EXEC CICS",
+    "EXEC SQL",
+    "EXEC DLI",
+    "ACCEPT verb disambiguation",
+    "error cascade",
+    "cobolprobe recall",
+    "Endevor -INC preprocessing",
+    "go-sitter-forest/cobol vendoring",
+    "tree-sitter-cli toolchain",
+    "NIST COBOL-85 test suite",
+    "upstreamability"
+  ],
+  "cross_refs": [
+    "cobolprobe/neutralize_test.go",
+    "gortex/internal/parser/forest/cobolprobe/README.md",
+    "the retrieval repo",
+    "the consolidation repo",
+    "the preprocessing repo",
+    "gortex",
+    "the subschema punch",
+    "a program in the estate",
+    "run_nist_cobol85.sh",
+    "skip_tests.txt",
+    "test/corpus/*.txt",
+    "test/check_tests.sh"
+  ],
+  "locked": false,
+  "precedence": null,
+  "notes": "MANIFEST_TYPE=SPEC supplied (directory convention docs/spec/ + SPEC-*.md filename); heuristic content signals agree — implementation contracts, acceptance criteria (§6), constraints (§7), measured scope tables (§5). Document self-declares 'Status: Accepted, not started'; per schema rules locked stays false because type is SPEC, not ADR. §9 contains four ADR-style locked decisions D1-D4 ('do not re-litigate') that the synthesizer should treat as locked decisions: D1 target is nodes-for-edges not cascade-removal; D2 build on this grammar rather than adopting another parser; D3 IDMS DML handled in both preprocessing and grammar; D4 EXEC DLI out of scope (zero occurrences). §10 lists four explicitly undecided open questions (EXEC SQL node granularity, CLI 0.24.5→0.25.x corpus impact, concrete recall target, upstream appetite) — must NOT be recorded as decisions. §8 flags a separate vendoring/integration phase. No MANIFEST_PRECEDENCE supplied."
+}
