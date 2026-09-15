@@ -82,10 +82,17 @@ make_seq_line() {
 }
 
 cd "$SCRATCH" || exit 1
+# A pre-push hook exports GIT_DIR/GIT_WORK_TREE and this repository uses an
+# absolute core.hooksPath. Clear both sources of inheritance before creating
+# the synthetic repository, otherwise its test pushes recursively invoke the
+# real pre-push hook and mutate the caller's worktree.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
 git init -q .
 git config user.email "estate-guard-selftest@local"
 git config user.name "estate-guard-selftest"
 git config commit.gpgsign false
+mkdir -p "$SCRATCH/no-hooks"
+git config core.hooksPath "$SCRATCH/no-hooks"
 
 # Base state (D-16 point 2's live posture, reproduced here so check 2 and
 # check-exclude cases 3/4 below have something real to mutate):
