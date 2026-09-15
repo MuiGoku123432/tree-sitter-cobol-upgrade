@@ -1,0 +1,191 @@
+====================================
+idms update store
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       STORE CUSTOMER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (STORE)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms update modify
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       MODIFY CUSTOMER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (MODIFY)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms update erase all members
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       ERASE CUSTOMER-REC ALL MEMBERS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (ERASE)
+        (idms_record_name
+          (WORD))
+        (ALL)
+        (MEMBERS))
+      (period))))
+
+====================================
+idms update connect
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       CONNECT CUSTOMER-REC TO CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (CONNECT)
+        (idms_record_name
+          (WORD))
+        (TO)
+        (idms_set_name
+          (WORD)))
+      (period))))
+
+====================================
+idms update disconnect
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       DISCONNECT CUSTOMER-REC FROM CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (DISCONNECT)
+        (idms_record_name
+          (WORD))
+        (FROM)
+        (idms_set_name
+          (WORD)))
+      (period))))
+
+====================================
+idms update get record
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       GET CUSTOMER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (GET)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms update get bare
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       GET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (GET))
+      (period))))
+
+====================================
+idms update erase permanent members
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       ERASE CUSTOMER-REC PERMANENT MEMBERS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (ERASE)
+        (idms_record_name
+          (WORD))
+        (PERMANENT)
+        (MEMBERS))
+      (period))))
+
+====================================
+idms update unparsed tail
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       ERASE CUSTOMER-REC SELECTIVE MEMBERS ODD-TOKEN.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_update_statement
+        verb: (ERASE)
+        (idms_record_name
+          (WORD))
+        (SELECTIVE)
+        (MEMBERS)
+        (idms_unparsed_tail
+          (WORD)))
+      (period))))

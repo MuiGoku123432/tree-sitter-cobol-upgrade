@@ -870,12 +870,26 @@ module.exports = grammar({
     ),
 
     record_description_list: $ => seq(
-      repeat1(seq($.data_description, repeat1('.')))
+      repeat1(seq(
+        choice(
+          $.data_description,
+          $.exec_sql_declare_section,
+          $.exec_sql_include
+        ),
+        repeat1('.')
+      ))
     ),
 
     working_storage_section: $ => seq(
       $._WORKING_STORAGE, $._SECTION, '.',
-      repeat(seq($.data_description, repeat1('.')))
+      repeat(seq(
+        choice(
+          $.data_description,
+          $.exec_sql_declare_section,
+          $.exec_sql_include
+        ),
+        repeat1('.')
+      ))
     ),
 
     data_description: $ => choice(
@@ -1376,9 +1390,16 @@ module.exports = grammar({
       $.delete_statement,
       $.display_statement,
       $.divide_statement,
+      $.exec_cics_statement,
+      $.exec_sql_statement,
+      $.exec_sql_include,
       $.exit_statement,
       $.goback_statement,
       $.goto_statement,
+      $.idms_accept_statement,
+      $.idms_navigation_statement,
+      $.idms_session_statement,
+      $.idms_update_statement,
       $.initialize_statement,
       $.inspect_statement,
       $.merge_statement,
@@ -1508,6 +1529,20 @@ module.exports = grammar({
     accept_statement: $ => seq(
       $._ACCEPT,
       $._accept_body,
+    ),
+
+    idms_accept_statement: $ => seq(
+      $._ACCEPT,
+      $._idms_accept_body,
+    ),
+
+    _idms_accept_body: $ => seq(
+      $._identifier,
+      $._FROM,
+      optional($.idms_record_name),
+      optional(choice($.NEXT, $.PRIOR, $.OWNER)),
+      $.CURRENCY,
+      optional($.idms_unparsed_tail),
     ),
 
     _accept_body: $ => prec.right(seq(
@@ -1828,10 +1863,10 @@ module.exports = grammar({
       $._literal
     ),
 
-    with_clause: $ => choice(
+    with_clause: $ => prec.right(choice(
       seq(optional($._WITH), $.NO, $.ADVANCING),
       seq($._WITH, repeat1($.disp_attr))
-    ),
+    )),
 
     disp_attr: $ => choice(
       $.BELL,
@@ -2223,6 +2258,588 @@ module.exports = grammar({
       $._TO,
       field('dst', $._target_x_list)
     ),
+
+    // EXEC CICS (Phase 3, D-17/D-18/D-20). One generic statement node covers
+    // all 26 measured commands: CICS is uniformly COMMAND KEYWORD(arg) ..., so
+    // the verb-class shape Phase 2 used for positional IDMS DML (D-01) buys
+    // nothing here and would leave unmeasured commands homeless.
+    //
+    // D-18: the command word is field('command', $.WORD), relying on
+    // tree-sitter keyword extraction (word: $ => $._WORD, line 14) to arbitrate
+    // READ / WRITE / DELETE / RETURN — four existing COBOL keyword tokens that
+    // are also 4 of the top 6 CICS commands. Those keyword tokens are not valid
+    // at this position, so the lexer falls back to WORD, and no `conflicts:`
+    // entry is needed. Proven by the D-32 fixture in test/corpus/exec_cics.txt,
+    // not by argument.
+    //
+    // The rule anchors on the two-token EXEC CICS opening rather than on EXEC
+    // alone: anchoring on EXEC alone would make it a keyword everywhere and can
+    // degrade the EXEC SQL and EXEC DLI parses Phase 4 inherits.
+    //
+    // D-20: END-EXEC is a required terminator. The trailing period carried by
+    // 1,283 of 2,886 measured blocks is left to the existing sentence
+    // machinery, exactly as every sibling _statement rule does; an optional
+    // terminator on a repeat() body invites the parser to swallow following
+    // paragraphs, which is the cascade CICS-03 exists to kill.
+    //
+    // D-28b: the option list is repeat(), never repeat1() — the no-option shape
+    // (EXEC CICS RETURN END-EXEC) is the corpus's most common block at
+    // 1,251 of 2,886 (43%).
+    // D-19: cics_unparsed_tail sits last before the terminator, mirroring the
+    // idms_unparsed_tail placement, so content the option forms do not model
+    // lands in a named, countable node rather than an ERROR.
+    exec_cics_statement: $ => seq(
+      $.EXEC,
+      $.CICS,
+      field('command', $.WORD),
+      repeat($._cics_option),
+      optional($.cics_unparsed_tail),
+      $.END_EXEC
+    ),
+
+    // D-28c: an option is a keyword optionally followed by a parenthesised
+    // argument. The bare no-parenthesis form is not an edge case — the three
+    // most common bare options measure 1,586 / 450 / 438 occurrences.
+    //
+    // prec.right(1, ...) is the same arbitration idms_record_name uses at
+    // line 2431, with an added associativity the IDMS rules did not need.
+    // Two distinct ambiguities exist here and both are resolved statically,
+    // with no `conflicts:` entry — the grammar still generates a length-0
+    // conflicts array:
+    //   1. A bare WORD is ambiguous between reducing as an option and as the
+    //      first token of cics_unparsed_tail, since both wrap $.WORD. The
+    //      precedence of 1 prefers the modelled option; _cics_operand_token
+    //      carries none.
+    //   2. On seeing '(' after an option keyword, the parser can either shift
+    //      into this rule's optional parenthesised argument or reduce the bare
+    //      option and let the tail take the '('. Right associativity prefers
+    //      the shift, which is the modelled reading: KEYWORD(arg) is one
+    //      option, not a bare option followed by unparsed junk.
+    //
+    // D-21 line: the 25-name corpus-derived option vocabulary is deliberately
+    // NOT hard-coded here. This is a generic-dialect grammar; only the four
+    // criterion operands get named nodes (added in 03-02). Every other option
+    // keyword is just $.WORD.
+    _cics_option: $ => prec.right(1, choice(
+      // D-21/D-23: the four criterion operands, and ONLY these four, get named
+      // nodes. MAPSET is here on its own measured evidence: 610 occurrences,
+      // effectively 1:1 with MAP.
+      seq($.TRANSID, '(', $.cics_transaction_name, ')'),
+      seq($.PROGRAM, '(', $.cics_program_name, ')'),
+      seq($.MAP,     '(', $.cics_map_name,       ')'),
+      seq($.MAPSET,  '(', $.cics_mapset_name,    ')'),
+      seq(
+        $.WORD,
+        optional(seq('(', $._cics_argument, ')'))
+      )
+    )),
+
+    // D-21: named rules, NOT field() labels. Two independent forces require
+    // this and both are verified:
+    //   1. Depth — field() binds only DIRECT children of the declaring rule,
+    //      so an operand nested inside an option sub-rule is unreachable to a
+    //      query written against exec_cics_statement.
+    //   2. The consumer — gortex's runQuery iterates matches and copies
+    //      captures with NO predicate evaluation whatsoever, so a
+    //      predicate-based query compiles and is then silently ignored,
+    //      matching every option against every capture. Predicate-based
+    //      extraction fails silently, which is worse than failing loudly.
+    //
+    // The node names are fixed verbatim by CONTEXT.md as the queries/cics.scm
+    // contract; renaming any of them means a coordinated change across the
+    // grammar, the published query, the vendored shim and the capture gate.
+    //
+    // prec(1, ...) mirrors idms_record_name at line 2431: a bare word right
+    // after a modelled keyword is ambiguous between reducing as the named
+    // operand or as the first token of the tail, both being single-token
+    // wrappers over the same underlying token, and static precedence prefers
+    // the modelled operand — resolved with no `conflicts:` entry.
+    //
+    // D-22: each operand body reuses $._cics_argument rather than the IDMS
+    // bare-word form, because it must wrap WHATEVER is inside the parens.
+    // This is load-bearing: 30 of 33 measured PROGRAM operands are data names,
+    // not quoted literals, so a literal-only body would miss 91% of them.
+    cics_transaction_name: $ => prec(1, $._cics_argument),
+
+    cics_program_name: $ => prec(1, $._cics_argument),
+
+    cics_map_name: $ => prec(1, $._cics_argument),
+
+    cics_mapset_name: $ => prec(1, $._cics_argument),
+
+    // D-29: all four measured argument forms modelled up front rather than
+    // through D-09's minimal-then-census round trip. The census D-09 deferred
+    // has already run, and CICS's uniform KEYWORD(arg) syntax made it cheap in
+    // a way IDMS's positional formats never were. Measured occurrences
+    // (counted during the phase discussion — see RESEARCH A5; these are
+    // recorded measurements, not figures re-derivable from this repo):
+    //   plain data name    2,041
+    //   quoted literal     1,993
+    //   LENGTH OF <name>     527
+    //   numeric literal       81
+    // $._LITERAL already covers both the quoted and numeric forms (it is
+    // choice($.number, $._string) at line 3011), so the two literal rows need
+    // no separate arm.
+    //
+    // The subscripted-data-name arm is a fifth form the four measured rows do
+    // not name, added on its own evidence: a precise census of the 7,971
+    // parenthesised arguments inside the estate's 3,726 EXEC CICS blocks found
+    // 54 (0.68%) carrying a nested parenthesis. Without this arm they do not
+    // degrade into cics_unparsed_tail as D-19 intends — they parse with a
+    // MISSING ")" error-recovery node, which is a defect, not graceful
+    // degradation. Subscripting is ordinary COBOL data reference syntax, so
+    // modelling it is generic-dialect work and not the site-specific hack
+    // D-21 forbids.
+    //
+    // MEASURED GAP, deliberately left open: 4 of those 7,971 arguments (0.05%)
+    // carry a comma, and they are the one construct measured that still yields
+    // a hard ERROR node. Left open for two verified reasons:
+    //   1. The ERROR is CONTAINED — a fixture with the comma form followed by
+    //      two more paragraphs still yields all 3 paragraph_header nodes, so
+    //      it does not cascade and CICS-03 is not at risk.
+    //   2. Closing it means fighting a pre-existing upstream token bug, not
+    //      adding a rule: `integer` is /[+-]?[0-9,]+/ (line 3013), which
+    //      matches a BARE COMMA, so the lexer emits `integer` where a ','
+    //      token is expected. A comma-list arm therefore does not work as
+    //      written, and making it work needs a lexical precedence on a token
+    //      shared with every numeric literal in the grammar — an
+    //      upstream-owned blast radius wildly out of proportion to 0.05%.
+    _cics_argument: $ => choice(
+      seq($._LENGTH, optional($._OF), $.WORD),
+      $._LITERAL,
+      seq($.WORD, '(', choice($._LITERAL, $.WORD), ')'),
+      $.WORD
+    ),
+
+    // D-19/D-30: the escape hatch. Structure copied from _idms_operand_token /
+    // idms_unparsed_tail (line 2441) — a repeat1 over the grammar's own atomic
+    // leaves, pure grammar with no external-scanner token.
+    //
+    // The bounding differs from IDMS and this is the phase's highest residual
+    // risk: idms_unparsed_tail bounds at the literal '.', which no leaf in its
+    // vocabulary can match, whereas CICS must bound at END-EXEC — a word that
+    // matches the _WORD regex (line 3491) in full, making the tail a candidate
+    // consumer of its own terminator (RESEARCH Pitfall 1 / A1). Keyword
+    // extraction is what arbitrates it: END_EXEC is a valid token in this
+    // state, so the lexer prefers the keyword over the WORD fallback and the
+    // terminator is consumed as the terminator. Settled by the boundary
+    // fixture in test/corpus/exec_cics.txt, not by argument.
+    //
+    // D-30: this vocabulary MUST NOT be widened until the census reports zero.
+    // The tail exists to make the coverage gap countable; tuning it until it
+    // stops firing defeats its purpose.
+    _cics_operand_token: $ => choice(
+      $.WORD,
+      $._LITERAL,
+      '(',
+      ')',
+      ','
+    ),
+
+    cics_unparsed_tail: $ => repeat1($._cics_operand_token),
+
+    // EXEC SQL (Phase 4, D-01/D-02/D-13/D-18). This is deliberately a
+    // bounded extraction grammar: the outer block, SELECT kind, CTE roles,
+    // sources and aliases are structured while all other SQL remains visible
+    // in sql_unparsed_tail nodes. END-EXEC is required and stays outside the
+    // body so recovery cannot consume following COBOL statements.
+    exec_sql_statement: $ => seq(
+      $.EXEC,
+      $.SQL,
+      choice(
+        seq(optional($.sql_cte_clause), $.sql_select_query),
+        $.sql_insert_statement,
+        $.sql_update_statement,
+        $.sql_delete_statement,
+        $.sql_merge_statement,
+        $.sql_create_table_statement,
+        $.sql_alter_table_statement,
+        $.sql_drop_table_statement,
+        $.sql_prepare_statement,
+        $.sql_declare_cursor_statement,
+        seq(
+          field('kind', $.WORD),
+          repeat($.sql_unparsed_tail)
+        )
+      ),
+      $.END_EXEC
+    ),
+
+    // D-09/D-10/D-11: BEGIN and END are independent markers. Data entries
+    // remain ordinary siblings in their enclosing section or record list.
+    exec_sql_declare_section: $ => seq(
+      $.EXEC,
+      $.SQL,
+      choice(
+        alias(/[bB][eE][gG][iI][nN]/, $.WORD),
+        alias(/[eE][nN][dD]/, $.WORD)
+      ),
+      alias(/[dD][eE][cC][lL][aA][rR][eE]/, $.WORD),
+      alias(/[sS][eE][cC][tT][iI][oO][nN]/, $.WORD),
+      $.END_EXEC
+    ),
+
+    // D-09/D-10/D-12: includes are named directives in DATA and PROCEDURE
+    // divisions. The member is generic and directly queryable.
+    exec_sql_include: $ => seq(
+      $.EXEC,
+      $.SQL,
+      alias(/[iI][nN][cC][lL][uU][dD][eE]/, $.WORD),
+      $.sql_include_name,
+      $.END_EXEC
+    ),
+
+    sql_include_name: $ => prec(1, $.WORD),
+
+    sql_cte_clause: $ => seq(
+      $._WITH,
+      sepBy($.sql_cte_definition, ',')
+    ),
+
+    sql_cte_definition: $ => prec.right(2, seq(
+      $.sql_cte_name,
+      optional(seq('(', sepBy($.WORD, ','), ')')),
+      $._AS,
+      '(',
+      $.sql_select_query,
+      ')'
+    )),
+
+    sql_cte_name: $ => prec(2, $.WORD),
+
+    sql_select_query: $ => prec.right(1, seq(
+      field('kind', alias($._SELECT, $.WORD)),
+      repeat(choice(
+        $.sql_source_reference,
+        $.sql_nested_query,
+        $.sql_unparsed_tail
+      ))
+    )),
+
+    sql_prepare_statement: $ => prec.right(2, seq(
+      field('kind', alias(/[pP][rR][eE][pP][aA][rR][eE]/, $.WORD)),
+      $.sql_unparsed_tail,
+      alias($._FROM, $.WORD),
+      $.sql_dynamic_source
+    )),
+
+    sql_dynamic_source: $ => prec(2, seq(
+      ':',
+      $.WORD
+    )),
+
+    sql_declare_cursor_statement: $ => prec.right(2, seq(
+      field('kind', alias(/[dD][eE][cC][lL][aA][rR][eE]/, $.WORD)),
+      $._sql_identifier,
+      alias(/[cC][uU][rR][sS][oO][rR]/, $.WORD),
+      alias(/[fF][oO][rR]/, $.WORD),
+      $.sql_select_query
+    )),
+
+    sql_insert_statement: $ => prec.right(2, seq(
+      field('kind', alias(/[iI][nN][sS][eE][rR][tT]/, $.WORD)),
+      alias($._INTO, $.WORD),
+      $.sql_source_candidate,
+      repeat($.sql_unparsed_tail)
+    )),
+
+    sql_update_statement: $ => prec.right(2, seq(
+      field('kind', alias($._UPDATE, $.WORD)),
+      $.sql_source_candidate,
+      repeat($.sql_unparsed_tail)
+    )),
+
+    sql_delete_statement: $ => prec.right(2, seq(
+      field('kind', alias($._DELETE, $.WORD)),
+      alias($._FROM, $.WORD),
+      $.sql_source_candidate,
+      repeat($.sql_unparsed_tail)
+    )),
+
+    sql_merge_statement: $ => prec.right(2, seq(
+      field('kind', alias($._MERGE, $.WORD)),
+      alias($._INTO, $.WORD),
+      $.sql_source_candidate,
+      repeat(choice(
+        $.sql_using_reference,
+        $.sql_unparsed_tail
+      ))
+    )),
+
+    sql_using_reference: $ => prec.right(2, seq(
+      alias($._USING, $.WORD),
+      $.sql_source_candidate
+    )),
+
+    sql_create_table_statement: $ => prec.right(2, seq(
+      field('kind', alias(/[cC][rR][eE][aA][tT][eE]/, $.WORD)),
+      alias(/[tT][aA][bB][lL][eE]/, $.WORD),
+      optional(seq(
+        alias(/[iI][fF]/, $.WORD),
+        alias(/[nN][oO][tT]/, $.WORD),
+        alias(/[eE][xX][iI][sS][tT][sS]/, $.WORD)
+      )),
+      $.sql_source_candidate,
+      repeat($.sql_unparsed_tail)
+    )),
+
+    sql_alter_table_statement: $ => prec.right(2, seq(
+      field('kind', alias($._ALTER, $.WORD)),
+      alias(/[tT][aA][bB][lL][eE]/, $.WORD),
+      $.sql_source_candidate,
+      repeat($.sql_unparsed_tail)
+    )),
+
+    sql_drop_table_statement: $ => prec.right(2, seq(
+      field('kind', alias(/[dD][rR][oO][pP]/, $.WORD)),
+      alias(/[tT][aA][bB][lL][eE]/, $.WORD),
+      optional(seq(
+        alias(/[iI][fF]/, $.WORD),
+        alias(/[eE][xX][iI][sS][tT][sS]/, $.WORD)
+      )),
+      $.sql_source_candidate,
+      repeat($.sql_unparsed_tail)
+    )),
+
+    sql_nested_query: $ => prec.right(2, seq(
+      '(',
+      $.sql_select_query,
+      ')',
+      optional($.sql_table_alias)
+    )),
+
+    sql_source_reference: $ => prec.right(2, seq(
+      choice($._FROM, $._SQL_JOIN),
+      choice(
+        $.sql_source_candidate,
+        $.sql_nested_query
+      )
+    )),
+
+    // D-18: this is intentionally a raw candidate. Plan 04-02 assigns it to
+    // the smallest enclosing statement range and subtracts same-statement CTE
+    // definitions before treating the remaining names as physical tables.
+    sql_source_candidate: $ => prec.right(2, seq(
+      $.sql_table_name,
+      optional($.sql_table_alias)
+    )),
+
+    // D-05/D-06: the complete two- or three-part object is one table node;
+    // its statement-local alias is a separate sibling node.
+    sql_table_name: $ => prec(2, sepBy($._sql_identifier, '.')),
+
+    sql_table_alias: $ => prec(2, seq(
+      $._AS,
+      $._sql_identifier
+    )),
+
+    _sql_identifier: $ => choice(
+      $.WORD,
+      $._sql_underscore_identifier,
+      $.sql_delimited_identifier
+    ),
+
+    _sql_underscore_identifier: $ => /[a-zA-Z0-9-]*_[a-zA-Z0-9_-]*/,
+
+    sql_delimited_identifier: $ => token(prec(1, /\"([^\"]|\"\")*\"/)),
+
+    // One bounded atomic leaf per named tail keeps modeled FROM/JOIN anchors
+    // available to keyword extraction instead of hiding them in a greedy sink.
+    sql_unparsed_tail: $ => prec(-1, choice(
+      $._sql_host_reference,
+      $._sql_qualified_reference,
+      $._sql_unparsed_token
+    )),
+
+    _sql_host_reference: $ => prec.right(1, seq(
+      ':',
+      sepBy($._sql_identifier, '.')
+    )),
+
+    _sql_qualified_reference: $ => prec.right(-1, seq(
+      $._sql_identifier,
+      '.',
+      $._sql_identifier
+    )),
+
+    _sql_unparsed_token: $ => choice(
+      $.WORD,
+      alias($._SELECT, $.WORD),
+      $._sql_underscore_identifier,
+      $._LITERAL,
+      '(',
+      ')',
+      ',',
+      '=',
+      '>',
+      '<',
+      '!',
+      '|',
+      ':',
+      '*',
+      '+',
+      '-'
+    ),
+
+    // SQL-only keywords are private except SQL itself. Keeping them valid only
+    // below the two-token EXEC SQL anchor protects ordinary COBOL verbs.
+    _SQL_JOIN: $ => /[jJ][oO][iI][nN]/,
+
+    // IDMS DML (Phase 2, D-01). idms_record_name/idms_set_name are named
+    // rules rather than field() labels (D-02) so queries/idms.scm matches
+    // them at any nesting depth across all four idms_*_statement types.
+    idms_navigation_statement: $ => seq(
+      field('verb', choice($.FIND, $.OBTAIN)),
+      $._idms_navigation_body
+    ),
+
+    idms_update_statement: $ => seq(
+      field('verb', choice(
+        $.STORE,
+        $.MODIFY,
+        $.ERASE,
+        $.CONNECT,
+        $.DISCONNECT,
+        $.GET
+      )),
+      optional($._idms_update_body)
+    ),
+
+    _idms_update_body: $ => seq(
+      $.idms_record_name,
+      optional(choice(
+        seq($.TO, $.idms_set_name),
+        seq($.FROM, $.idms_set_name)
+      )),
+      // ERASE <record> [ALL|PERMANENT|SELECTIVE] [MEMBERS]. Modelled on
+      // measured volume: the D-09 tail census found this shape in 14 of 119
+      // idms_unparsed_tail records (12%), the second and only other
+      // concentration after BIND RUN-UNIT DBNAME.
+      optional(seq(
+        choice($.ALL, $.PERMANENT, $.SELECTIVE),
+        optional($.MEMBERS)
+      )),
+      optional($.idms_unparsed_tail)
+    ),
+
+    idms_session_statement: $ => $._idms_session_body,
+
+    _idms_session_body: $ => prec.right(choice(
+      seq(
+        field('verb', $.BIND),
+        optional(choice($.RUN_UNIT, $.idms_record_name)),
+        // BIND RUN-UNIT DBNAME <db-name>. Modelled on measured volume: the
+        // D-09 tail census found this shape in 96 of 119 idms_unparsed_tail
+        // records (81%). The database name is not a graph edge, so it is
+        // absorbed as $.WORD rather than given its own node, matching how
+        // the DB-KEY navigation format treats its operand.
+        optional(seq($.DBNAME, $.WORD)),
+        optional($.idms_unparsed_tail)
+      ),
+      seq(
+        field('verb', $.READY),
+        optional($.idms_record_name),
+        optional(seq(
+          $.USAGE_MODE,
+          optional($.IS),
+          repeat(choice(
+            $.PROTECTED,
+            $.EXCLUSIVE,
+            $.RETRIEVAL,
+            $.UPDATE
+          ))
+        )),
+        optional($.idms_unparsed_tail)
+      ),
+      seq(
+        field('verb', $.FINISH),
+        optional($.TASK),
+        optional($.idms_unparsed_tail)
+      ),
+      seq(
+        field('verb', $.COMMIT),
+        optional($.TASK),
+        optional($.ALL),
+        optional($.idms_unparsed_tail)
+      ),
+      seq(
+        field('verb', $.ROLLBACK),
+        optional($.TASK),
+        optional($.CONTINUE),
+        optional($.idms_unparsed_tail)
+      )
+    )),
+
+    // Six manual-documented FIND/OBTAIN formats (CA IDMS DML Reference for
+    // COBOL), each preceded by the shared optional KEEP [EXCLUSIVE] prefix.
+    _idms_navigation_body: $ => seq(
+      optional(seq($.KEEP, optional($.EXCLUSIVE))),
+      choice(
+        // Format: DB-KEY
+        seq(
+          optional($.idms_record_name),
+          $.DB_KEY,
+          $.IS,
+          $.WORD,
+          optional(seq($.PAGE_INFO, $.WORD))
+        ),
+        // Format: CALC
+        seq(
+          optional(choice($.CALC, $.ANY)),
+          $.idms_record_name
+        ),
+        // Format: OWNER
+        seq(
+          $.OWNER,
+          $.WITHIN,
+          $.idms_set_name
+        ),
+        // Format: WITHIN set/area
+        seq(
+          optional(choice($.NEXT, $.PRIOR, $.FIRST, $.LAST, $.integer)),
+          optional($.idms_record_name),
+          $.WITHIN,
+          $.idms_set_name
+        ),
+        // Format: CURRENT
+        seq(
+          $.CURRENT,
+          optional(choice(
+            $.idms_record_name,
+            seq($.WITHIN, $.idms_set_name)
+          ))
+        ),
+      ),
+      optional($.idms_unparsed_tail)
+    ),
+
+    // prec(1, ...): a bare WORD immediately after a modeled verb/clause
+    // token is ambiguous between reducing as this named operand or as the
+    // first token of idms_unparsed_tail (both are single-token wrappers
+    // around $.WORD) — tree-sitter generate reports this as a genuine
+    // reduce/reduce conflict. Static precedence prefers the modeled
+    // operand, per the plan's resolution order (static prec() before
+    // conflicts:/prec.dynamic()); it resolved this cleanly with no
+    // generator error, so no `conflicts:` entry was needed.
+    idms_record_name: $ => prec(1, $.WORD),
+
+    idms_set_name: $ => prec(1, $.WORD),
+
+    // D-03: an operand tail the four formats above don't model is absorbed
+    // into this named node rather than left to ERROR or silently dropped.
+    // Pure grammar (no external-scanner token, per RESEARCH.md) — a repeat
+    // over the grammar's own atomic leaves, bounded at the literal '.'
+    // (never consumed here) the same way neutralize()'s own `[^.]*\.`
+    // statement-boundary regex already does across the corpus.
+    _idms_operand_token: $ => choice(
+      $.WORD,
+      $._LITERAL,
+      '(',
+      ')',
+      ','
+    ),
+
+    idms_unparsed_tail: $ => repeat1($._idms_operand_token),
 
     _x: $ => choice(
       seq($._LENGTH, optional($._OF), choice(
@@ -2869,6 +3486,7 @@ module.exports = grammar({
     _BINARY_DOUBLE: $ => /[bB][iI][nN][aA][rR][yY]-[dD][oO][uU][bB][lL][eE]/,
     _BINARY_LONG: $ => /[bB][iI][nN][aA][rR][yY]-[lL][oO][nN][gG]/,
     _BINARY_SHORT: $ => /[bB][iI][nN][aA][rR][yY]-[sS][hH][oO][rR][tT]/,
+    _BIND: $ => /[bB][iI][nN][dD]/,
     _BLANK: $ => /[bB][lL][aA][nN][kK]/,
     _BLANK_LINE: $ => /[bB][lL][aA][nN][kK]-[lL][iI][nN][eE]/,
     _BLANK_SCREEN: $ => /[bB][lL][aA][nN][kK]-[sS][cC][rR][eE][eE][nN]/,
@@ -2877,12 +3495,14 @@ module.exports = grammar({
     _BOTTOM: $ => /[bB][oO][tT][tT][oO][mM]/,
     _BY: $ => /[bB][yY]/,
     _BYTE_LENGTH: $ => /[bB][yY][tT][eE]-[lL][eE][nN][gG][tT][hH]/,
+    _CALC: $ => /[cC][aA][lL][cC]/,
     _CALL: $ => /[cC][aA][lL][lL]/,
     _CANCEL: $ => /[cC][aA][nN][cC][eE][lL]/,
     _CH: $ => /[cC][hH]/,
     _CHAINING: $ => /[cC][hH][aA][iI][nN][iI][nN][gG]/,
     _CHARACTER: $ => /[cC][hH][aA][rR][aA][cC][tT][eE][rR]/,
     _CHARACTERS: $ => /[cC][hH][aA][rR][aA][cC][tT][eE][rR][sS]/,
+    _CICS: $ => /[cC][iI][cC][sS]/,
     _CLASS: $ => /[cC][lL][aA][sS][sS]/,
     _CLASS_NAME: $ => /[cC][lL][aA][sS][sS]-[nN][aA][mM][eE]/,
     _COPY: $ => /[cC][oO][pP][yY]/,
@@ -2902,15 +3522,16 @@ module.exports = grammar({
     _COMMITMENT_CONTROL: $ => /[cC][oO][mM][mM][iI][tT][mM][eE][nN][tT]-[cC][oO][nN][tT][rR][oO][lL]/,
     _COMMON: $ => /[cC][oO][mM][mM][oO][nN]/,
     _COMP: $ => /[cC][oO][mM][pP]/,
-    _COMPUTE: $ => /[cC][oO][mM][pP][uU][tT][eE]/,
     _COMP_1: $ => /[cC][oO][mM][pP]-1/,
     _COMP_2: $ => /[cC][oO][mM][pP]-2/,
     _COMP_3: $ => /[cC][oO][mM][pP]-3/,
     _COMP_4: $ => /[cC][oO][mM][pP]-4/,
     _COMP_5: $ => /[cC][oO][mM][pP]-5/,
     _COMP_X: $ => /[cC][oO][mM][pP]-[xX]/,
+    _COMPUTE: $ => /[cC][oO][mM][pP][uU][tT][eE]/,
     _CONCATENATE_FUNC: $ => /[cC][oO][nN][cC][aA][tT][eE][nN][aA][tT][eE]-[fF][uU][nN][cC]/,
     _CONFIGURATION: $ => /[cC][oO][nN][fF][iI][gG][uU][rR][aA][tT][iI][oO][nN]/,
+    _CONNECT: $ => /[cC][oO][nN][nN][eE][cC][tT]/,
     _CONSTANT: $ => /[cC][oO][nN][sS][tT][aA][nN][tT]/,
     _CONTAINS: $ => /[cC][oO][nN][tT][aA][iI][nN][sS]/,
     _CONTENT: $ => /[cC][oO][nN][tT][eE][nN][tT]/,
@@ -2925,6 +3546,7 @@ module.exports = grammar({
     _COUNT: $ => /[cC][oO][uU][nN][tT]/,
     _CRT: $ => /[cC][rR][tT]/,
     _CURRENCY: $ => /[cC][uU][rR][rR][eE][nN][cC][yY]/,
+    _CURRENT: $ => /[cC][uU][rR][rR][eE][nN][tT]/,
     _CURRENT_DATE_FUNC: $ => /[cC][uU][rR][rR][eE][nN][tT]-[dD][aA][tT][eE]-[fF][uU][nN][cC]/,
     _CURSOR: $ => /[cC][uU][rR][sS][oO][rR]/,
     _CYCLE: $ => /[cC][yY][cC][lL][eE]/,
@@ -2933,6 +3555,8 @@ module.exports = grammar({
     _DATE: $ => /[dD][aA][tT][eE]/,
     _DAY: $ => /[dD][aA][yY]/,
     _DAY_OF_WEEK: $ => /[dD][aA][yY]-[oO][fF]-[wW][eE][eE][kK]/,
+    _DB_KEY: $ => /[dD][bB]-[kK][eE][yY]/,
+    _DBNAME: $ => /[dD][bB][nN][aA][mM][eE]/,
     _DE: $ => /[dD][eE]/,
     _DEBUGGING: $ => /[dD][eE][bB][uU][gG][gG][iI][nN][gG]/,
     _DECIMAL_POINT: $ => /[dD][eE][cC][iI][mM][aA][lL]-[pP][oO][iI][nN][tT]/,
@@ -2944,6 +3568,7 @@ module.exports = grammar({
     _DEPENDING: $ => /[dD][eE][pP][eE][nN][dD][iI][nN][gG]/,
     _DESCENDING: $ => /[dD][eE][sS][cC][eE][nN][dD][iI][nN][gG]/,
     _DETAIL: $ => /[dD][eE][tT][aA][iI][lL]/,
+    _DISCONNECT: $ => /[dD][iI][sS][cC][oO][nN][nN][eE][cC][tT]/,
     _DISK: $ => /[dD][iI][sS][kK]/,
     _DISPLAY: $ => /[dD][iI][sS][pP][lL][aA][yY]/,
     _DIVIDE: $ => /[dD][iI][vV][iI][dD][eE]/,
@@ -2962,6 +3587,7 @@ module.exports = grammar({
     _END_DISPLAY: $ => /[eE][nN][dD]-[dD][iI][sS][pP][lL][aA][yY]/,
     _END_DIVIDE: $ => /[eE][nN][dD]-[dD][iI][vV][iI][dD][eE]/,
     _END_EVALUATE: $ => /[eE][nN][dD]-[eE][vV][aA][lL][uU][aA][tT][eE]/,
+    _END_EXEC: $ => /[eE][nN][dD]-[eE][xX][eE][cC]/,
     _END_FUNCTION: $ => /[eE][nN][dD]-[fF][uU][nN][cC][tT][iI][oO][nN]/,
     _END_IF: $ => /[eE][nN][dD]-[iI][fF]/,
     _END_MULTIPLY: $ => /[eE][nN][dD]-[mM][uU][lL][tT][iI][pP][lL][yY]/,
@@ -2993,6 +3619,7 @@ module.exports = grammar({
     _EVENT_STATUS: $ => /[eE][vV][eE][nN][tT]-[sS][tT][aA][tT][uU][sS]/,
     _EXCEPTION: $ => /[eE][xX][cC][eE][pP][tT][iI][oO][nN]/,
     _EXCLUSIVE: $ => /[eE][xX][cC][lL][uU][sS][iI][vV][eE]/,
+    _EXEC: $ => /[eE][xX][eE][cC]/,
     _EXIT: $ => /[eE][xX][iI][tT]/,
     _EXTEND: $ => /[eE][xX][tT][eE][nN][dD]/,
     _EXTERNAL: $ => /[eE][xX][tT][eE][rR][nN][aA][lL]/,
@@ -3001,6 +3628,8 @@ module.exports = grammar({
     _FILE_ID: $ => /[fF][iI][lL][eE]-[iI][dD]/,
     _FILLER: $ => /[fF][iI][lL][lL][eE][rR]/,
     _FINAL: $ => /[fF][iI][nN][aA][lL]/,
+    _FIND: $ => /[fF][iI][nN][dD]/,
+    _FINISH: $ => /[fF][iI][nN][iI][sS][hH]/,
     _FIRST: $ => /[fF][iI][rR][sS][tT]/,
     _FOOTING: $ => /[fF][oO][oO][tT][iI][nN][gG]/,
     _FOR: $ => /[fF][oO][rR]/,
@@ -3015,6 +3644,7 @@ module.exports = grammar({
     _FUNCTION_NAME: $ => /[fF][uU][nN][cC][tT][iI][oO][nN]-[nN][aA][mM][eE]/,
     _GE: $ => /[gG][eE]/,
     _GENERATE: $ => /[gG][eE][nN][eE][rR][aA][tT][eE]/,
+    _GET: $ => /[gG][eE][tT]/,
     _GIVING: $ => /[gG][iI][vV][iI][nN][gG]/,
     _GLOBAL: $ => /[gG][lL][oO][bB][aA][lL]/,
     _GO: $ => /[gG][oO]/,
@@ -3054,6 +3684,7 @@ module.exports = grammar({
     _I_O_CONTROL: $ => /[iI]-[oO]-[cC][oO][nN][tT][rR][oO][lL]/,
     _JUST: $ => /[jJ][uU][sS][tT]/,
     _JUSTIFIED: $ => /[jJ][uU][sS][tT][iI][fF][iI][eE][dD]/,
+    _KEEP: $ => /[kK][eE][eE][pP]/,
     _KEY: $ => /[kK][eE][yY]/,
     _LABEL: $ => /[lL][aA][bB][eE][lL]/,
     _LAST: $ => /[lL][aA][sS][tT]/,
@@ -3087,12 +3718,16 @@ module.exports = grammar({
       'LOW-values', 'LOW-Values', 'LOW-VALUES',
     ),
     _MANUAL: $ => /[mM][aA][nN][uU][aA][lL]/,
+    _MAP: $ => /[mM][aA][pP]/,
+    _MAPSET: $ => /[mM][aA][pP][sS][eE][tT]/,
+    _MEMBERS: $ => /[mM][eE][mM][bB][eE][rR][sS]/,
     _MEMORY: $ => /[mM][eE][mM][oO][rR][yY]/,
     _MERGE: $ => /[mM][eE][rR][gG][eE]/,
     _MINUS: $ => /[mM][iI][nN][uU][sS]/,
     //todo
     _MNEMONIC_NAME: $ => /[sS][wW]\-[0-9]/,
     _MODE: $ => /[mM][oO][dD][eE]/,
+    _MODIFY: $ => /[mM][oO][dD][iI][fF][yY]/,
     _MOVE: $ => /[mM][oO][vV][eE]/,
     _MULTIPLE: $ => /[mM][uU][lL][tT][iI][pP][lL][eE]/,
     _MULTIPLY: $ => /[mM][uU][lL][tT][iI][pP][lL][yY]/,
@@ -3118,6 +3753,7 @@ module.exports = grammar({
     _NUMERIC_EDITED: $ => /[nN][uU][mM][eE][rR][iI][cC]-[eE][dD][iI][tT][eE][dD]/,
     _NUMVALC_FUNC: $ => /[nN][uU][mM][vV][aA][lL][cC]-[fF][uU][nN][cC]/,
     _OBJECT_COMPUTER: $ => /[oO][bB][jJ][eE][cC][tT]-[cC][oO][mM][pP][uU][tT][eE][rR]/,
+    _OBTAIN: $ => /[oO][bB][tT][aA][iI][nN]/,
     _OCCURS: $ => /[oO][cC][cC][uU][rR][sS]/,
     _OF: $ => /[oO][fF]/,
     _OFF: $ => /[oO][fF][fF]/,
@@ -3133,13 +3769,16 @@ module.exports = grammar({
     _OUTPUT: $ => /[oO][uU][tT][pP][uU][tT]/,
     _OVERFLOW: $ => /[oO][vV][eE][rR][fF][lL][oO][wW]/,
     _OVERLINE: $ => /[oO][vV][eE][rR][lL][iI][nN][eE]/,
+    _OWNER: $ => /[oO][wW][nN][eE][rR]/,
     _PACKED_DECIMAL: $ => /[pP][aA][cC][kK][eE][dD]-[dD][eE][cC][iI][mM][aA][lL]/,
     _PADDING: $ => /[pP][aA][dD][dD][iI][nN][gG]/,
     _PAGE: $ => /[pP][aA][gG][eE]/,
     _PAGE_FOOTING: $ => /[pP][aA][gG][eE]-[fF][oO][oO][tT][iI][nN][gG]/,
     _PAGE_HEADING: $ => /[pP][aA][gG][eE]-[hH][eE][aA][dD][iI][nN][gG]/,
+    _PAGE_INFO: $ => /[pP][aA][gG][eE]-[iI][nN][fF][oO]/,
     _PARAGRAPH: $ => /[pP][aA][rR][aA][gG][rR][aA][pP][hH]/,
     _PERFORM: $ => /[pP][eE][rR][fF][oO][rR][mM]/,
+    _PERMANENT: $ => /[pP][eE][rR][mM][aA][nN][eE][nN][tT]/,
     _PIC: $ => /[pP][iI][cC]/,
     _PICTURE: $ => /[pP][iI][cC][tT][uU][rR][eE]/,
     _PLUS: $ => /[pP][lL][uU][sS]/,
@@ -3150,6 +3789,7 @@ module.exports = grammar({
     _PREVIOUS: $ => /[pP][rR][eE][vV][iI][oO][uU][sS]/,
     _PRINTER: $ => /[pP][rR][iI][nN][tT][eE][rR]/,
     _PRINTING: $ => /[pP][rR][iI][nN][tT][iI][nN][gG]/,
+    _PRIOR: $ => /[pP][rR][iI][oO][rR]/,
     _PROCEDURE: $ => /[pP][rR][oO][cC][eE][dD][uU][rR][eE]/,
     _PROCEDURES: $ => /[pP][rR][oO][cC][eE][dD][uU][rR][eE][sS]/,
     _PROCEED: $ => /[pP][rR][oO][cC][eE][eE][dD]/,
@@ -3158,10 +3798,12 @@ module.exports = grammar({
     _PROGRAM_NAME: $ => /[pP][rR][oO][gG][rR][aA][mM]-[nN][aA][mM][eE]/,
     _PROGRAM_POINTER: $ => /[pP][rR][oO][gG][rR][aA][mM]-[pP][oO][iI][nN][tT][eE][rR]/,
     _PROMPT: $ => /[pP][rR][oO][mM][pP][tT]/,
+    _PROTECTED: $ => /[pP][rR][oO][tT][eE][cC][tT][eE][dD]/,
     _QUOTE: $ => choice('quote', 'QUOTE', 'Quote', 'quotes', 'QUOTES', 'Quotes'),
     _RANDOM: $ => /[rR][aA][nN][dD][oO][mM]/,
     _RD: $ => /[rR][dD]/,
     _READ: $ => /[rR][eE][aA][dD]/,
+    _READY: $ => /[rR][eE][aA][dD][yY]/,
     _RECORD: $ => /[rR][eE][cC][oO][rR][dD]/,
     _RECORDING: $ => /[rR][eE][cC][oO][rR][dD][iI][nN][gG]/,
     _RECORDS: $ => /[rR][eE][cC][oO][rR][dD][sS]/,
@@ -3183,6 +3825,7 @@ module.exports = grammar({
     _REPOSITORY: $ => /[rR][eE][pP][oO][sS][iI][tT][oO][rR][yY]/,
     _REQUIRED: $ => /[rR][eE][qQ][uU][iI][rR][eE][dD]/,
     _RESERVE: $ => /[rR][eE][sS][eE][rR][vV][eE]/,
+    _RETRIEVAL: $ => /[rR][eE][tT][rR][iI][eE][vV][aA][lL]/,
     _RETURN: $ => /[rR][eE][tT][uU][rR][nN]/,
     _RETURNING: $ => /[rR][eE][tT][uU][rR][nN][iI][nN][gG]/,
     _REVERSE_FUNC: $ => /[rR][eE][vV][eE][rR][sS][eE]-[fF][uU][nN][cC]/,
@@ -3193,6 +3836,7 @@ module.exports = grammar({
     _ROLLBACK: $ => /[rR][oO][lL][lL][bB][aA][cC][kK]/,
     _ROUNDED: $ => /[rR][oO][uU][nN][dD][eE][dD]/,
     _RUN: $ => /[rR][uU][nN]/,
+    _RUN_UNIT: $ => /[rR][uU][nN]-[uU][nN][iI][tT]/,
     _SAME: $ => /[sS][aA][mM][eE]/,
     _SCREEN: $ => /[sS][cC][rR][eE][eE][nN]/,
     _SCREEN_CONTROL: $ => /[sS][cC][rR][eE][eE][nN]-[cC][oO][nN][tT][rR][oO][lL]/,
@@ -3203,6 +3847,7 @@ module.exports = grammar({
     _SECURE: $ => /[sS][eE][cC][uU][rR][eE]/,
     _SEGMENT_LIMIT: $ => /[sS][eE][gG][mM][eE][nN][tT]-[lL][iI][mM][iI][tT]/,
     _SELECT: $ => /[sS][eE][lL][eE][cC][tT]/,
+    _SELECTIVE: $ => /[sS][eE][lL][eE][cC][tT][iI][vV][eE]/,
     _SEMI_COLON: $ => /;+/,
     _SENTENCE: $ => /[sS][eE][nN][tT][eE][nN][cC][eE]/,
     _SEPARATE: $ => /[sS][eE][pP][aA][rR][aA][tT][eE]/,
@@ -3229,6 +3874,7 @@ module.exports = grammar({
     _START: $ => /[sS][tT][aA][rR][tT]/,
     _STATUS: $ => /[sS][tT][aA][tT][uU][sS]/,
     _STOP: $ => /[sS][tT][oO][pP]/,
+    _STORE: $ => /[sS][tT][oO][rR][eE]/,
     _STRING: $ => /[sS][tT][rR][iI][nN][gG]/,
     _SUBSTITUTE_FUNC: $ => /[sS][uU][bB][sS][tT][iI][tT][uU][tT][eE]-[fF][uU][nN][cC]/,
     _SUBSTITUTE_CASE_FUNC: $ => /[sS][uU][bB][sS][tT][iI][tT][uU][tT][eE]-[cC][aA][sS][eE]-[fF][uU][nN][cC]/,
@@ -3240,6 +3886,7 @@ module.exports = grammar({
     _SYNCHRONIZED: $ => /[sS][yY][nN][cC][hH][rR][oO][nN][iI][zZ][eE][dD]/,
     _TALLYING: $ => /[tT][aA][lL][lL][yY][iI][nN][gG]/,
     _TAPE: $ => /[tT][aA][pP][eE]/,
+    _TASK: $ => /[tT][aA][sS][kK]/,
     _TERMINATE: $ => /[tT][eE][rR][mM][iI][nN][aA][tT][eE]/,
     _TEST: $ => /[tT][eE][sS][tT]/,
     _THAN: $ => /[tT][hH][aA][nN]/,
@@ -3248,6 +3895,7 @@ module.exports = grammar({
     _TIME: $ => /[tT][iI][mM][eE]/,
     _TIMES: $ => /[tT][iI][mM][eE][sS]/,
     _TO: $ => /[tT][oO]/,
+    _TRANSID: $ => /[tT][rR][aA][nN][sS][iI][dD]/,
     _FALSE: $ => /[fF][aA][lL][sS][eE]/,
     _FILE: $ => /[fF][iI][lL][eE]/,
     _INITIAL: $ => /[iI][nN][iI][tT][iI][aA][lL]/,
@@ -3277,6 +3925,7 @@ module.exports = grammar({
     _UPON_ENVIRONMENT_VALUE: $ => /[uU][pP][oO][nN]-[eE][nN][vV][iI][rR][oO][nN][mM][eE][nN][tT]-[vV][aA][lL][uU][eE]/,
     _UPPER_CASE_FUNC: $ => /[uU][pP][pP][eE][rR]-[cC][aA][sS][eE]-[fF][uU][nN][cC]/,
     _USAGE: $ => /[uU][sS][aA][gG][eE]/,
+    _USAGE_MODE: $ => /[uU][sS][aA][gG][eE]-[mM][oO][dD][eE]/,
     _USE: $ => /[uU][sS][eE]/,
     _USING: $ => /[uU][sS][iI][nN][gG]/,
     _VALUE: $ => /[vV][aA][lL][uU][eE]/,
@@ -3287,6 +3936,7 @@ module.exports = grammar({
     _WHEN_COMPILED_FUNC: $ => /[wW][hH][eE][nN]-[cC][oO][mM][pP][iI][lL][eE][dD]-[fF][uU][nN][cC]/,
     _WHEN_OTHER: $ => /[wW][hH][eE][nN][ \t\n]+[oO][tT][hH][eE][rR]/,
     _WITH: $ => /[wW][iI][tT][hH]/,
+    _WITHIN: $ => /[wW][iI][tT][hH][iI][nN]/,
     _WORD: $ => /([0-9][a-zA-Z0-9-]*[a-zA-Z][a-zA-Z0-9-]*)|([a-zA-Z][a-zA-Z0-9-]*)/,
     _WORDS: $ => /[wW][oO][rR][dD][sS]/,
     _WORKING_STORAGE: $ => /[wW][oO][rR][kK][iI][nN][gG]-[sS][tT][oO][rR][aA][gG][eE]/,
@@ -3336,6 +3986,7 @@ module.exports = grammar({
     BINARY_DOUBLE: $ => $._BINARY_DOUBLE,
     BINARY_LONG: $ => $._BINARY_LONG,
     BINARY_SHORT: $ => $._BINARY_SHORT,
+    BIND: $ => $._BIND,
     //BLANK: $ => $._BLANK,
     BLANK_LINE: $ => $._BLANK_LINE,
     BLANK_SCREEN: $ => $._BLANK_SCREEN,
@@ -3344,12 +3995,14 @@ module.exports = grammar({
     //BOTTOM: $ => $._BOTTOM,
     BY: $ => $._BY,
     //BYTE_LENGTH: $ => $._BYTE_LENGTH,
+    CALC: $ => $._CALC,
     //CALL: $ => $._CALL,
     //CANCEL: $ => $._CANCEL,
     //CH: $ => $._CH,
     CHAINING: $ => $._CHAINING,
     //CHARACTER: $ => $._CHARACTER,
     CHARACTERS: $ => $._CHARACTERS,
+    CICS: $ => $._CICS,
     //CLASS: $ => $._CLASS,
     CLASS_NAME: $ => $._CLASS_NAME,
     //CLOSE: $ => $._CLOSE,
@@ -3364,7 +4017,7 @@ module.exports = grammar({
     //COMMA: $ => $._COMMA,
     COMMAND_LINE: $ => $._COMMAND_LINE,
     //COMMA_DELIM: $ => $._COMMA_DELIM,
-    //COMMIT: $ => $._COMMIT,
+    COMMIT: $ => $._COMMIT,
     COMMITMENT_CONTROL: $ => $._COMMITMENT_CONTROL,
     //COMMON: $ => $._COMMON,
     COMP: $ => $._COMP,
@@ -3377,10 +4030,11 @@ module.exports = grammar({
     COMP_X: $ => $._COMP_X,
     CONCATENATE_FUNC: $ => $._CONCATENATE_FUNC,
     //CONFIGURATION: $ => $._CONFIGURATION,
+    CONNECT: $ => $._CONNECT,
     //CONSTANT: $ => $._CONSTANT,
     //CONTAINS: $ => $._CONTAINS,
     //CONTENT: $ => $._CONTENT,
-    //CONTINUE: $ => $._CONTINUE,
+    CONTINUE: $ => $._CONTINUE,
     //CONTROL: $ => $._CONTROL,
     //CONTROLS: $ => $._CONTROLS,
     //CONTROL_FOOTING: $ => $._CONTROL_FOOTING,
@@ -3390,7 +4044,8 @@ module.exports = grammar({
     CORRESPONDING: $ => $._CORRESPONDING,
     //COUNT: $ => $._COUNT,
     CRT: $ => $._CRT,
-    //CURRENCY: $ => $._CURRENCY,
+    CURRENCY: $ => $._CURRENCY,
+    CURRENT: $ => $._CURRENT,
     CURRENT_DATE_FUNC: $ => $._CURRENT_DATE_FUNC,
     //CURSOR: $ => $._CURSOR,
     CYCLE: $ => $._CYCLE,
@@ -3399,6 +4054,8 @@ module.exports = grammar({
     DATE: $ => $._DATE,
     DAY: $ => $._DAY,
     DAY_OF_WEEK: $ => $._DAY_OF_WEEK,
+    DB_KEY: $ => $._DB_KEY,
+    DBNAME: $ => $._DBNAME,
     //DE: $ => $._DE,
     //DEBUGGING: $ => $._DEBUGGING,
     //DECIMAL_POINT: $ => $._DECIMAL_POINT,
@@ -3410,6 +4067,7 @@ module.exports = grammar({
     //DEPENDING: $ => $._DEPENDING,
     DESCENDING: $ => $._DESCENDING,
     //DETAIL: $ => $._DETAIL,
+    DISCONNECT: $ => $._DISCONNECT,
     DISK: $ => $._DISK,
     DISPLAY: $ => $._DISPLAY,
     //DIVIDE: $ => $._DIVIDE,
@@ -3428,6 +4086,7 @@ module.exports = grammar({
     END_DISPLAY: $ => $._END_DISPLAY,
     END_DIVIDE: $ => $._END_DIVIDE,
     END_EVALUATE: $ => $._END_EVALUATE,
+    END_EXEC: $ => $._END_EXEC,
     END_FUNCTION: $ => $._END_FUNCTION,
     END_IF: $ => $._END_IF,
     END_MULTIPLY: $ => $._END_MULTIPLY,
@@ -3459,6 +4118,7 @@ module.exports = grammar({
     //EVENT_STATUS: $ => $._EVENT_STATUS,
     EXCEPTION: $ => $._EXCEPTION,
     EXCLUSIVE: $ => $._EXCLUSIVE,
+    EXEC: $ => $._EXEC,
     //EXIT: $ => $._EXIT,
     EXTEND: $ => $._EXTEND,
     EXTERNAL: $ => $._EXTERNAL,
@@ -3467,6 +4127,8 @@ module.exports = grammar({
     FILE_ID: $ => $._FILE_ID,
     FILLER: $ => $._FILLER,
     //FINAL: $ => $._FINAL,
+    FIND: $ => $._FIND,
+    FINISH: $ => $._FINISH,
     FIRST: $ => $._FIRST,
     //FOOTING: $ => $._FOOTING,
     //FOR: $ => $._FOR,
@@ -3474,8 +4136,9 @@ module.exports = grammar({
     FOREVER: $ => $._FOREVER,
     //FORMS_OVERLAY: $ => $._FORMS_OVERLAY,
     //FREE: $ => $._FREE,
-    //FROM: $ => $._FROM,
+    FROM: $ => $._FROM,
     FULL: $ => $._FULL,
+    GET: $ => $._GET,
     //FUNCTION: $ => $._FUNCTION,
     //FUNCTION_ID: $ => $._FUNCTION_ID,
     FUNCTION_NAME: $ => $._FUNCTION_NAME,
@@ -3508,13 +4171,14 @@ module.exports = grammar({
     //INTRINSIC: $ => $._INTRINSIC,
     //INVALID: $ => $._INVALID,
     //INVALID_KEY: $ => $._INVALID_KEY,
-    //IS: $ => $._IS,
+    IS: $ => $._IS,
     I_O: $ => $._I_O,
     //I_O_CONTROL: $ => $._I_O_CONTROL,
     //JUSTIFIED: $ => $._JUSTIFIED,
+    KEEP: $ => $._KEEP,
     KEY: $ => $._KEY,
     //LABEL: $ => $._LABEL,
-    //LAST: $ => $._LAST,
+    LAST: $ => $._LAST,
     //LAST_DETAIL: $ => $._LAST_DETAIL,
     //LE: $ => $._LE,
     LEADING: $ => $._LEADING,
@@ -3539,11 +4203,15 @@ module.exports = grammar({
     LOWLIGHT: $ => $._LOWLIGHT,
     LOW_VALUE: $ => $._LOW_VALUE,
     MANUAL: $ => $._MANUAL,
+    MEMBERS: $ => $._MEMBERS,
+    MAP: $ => $._MAP,
+    MAPSET: $ => $._MAPSET,
     //MEMORY: $ => $._MEMORY,
     //MERGE: $ => $._MERGE,
     //MINUS: $ => $._MINUS,
     MNEMONIC_NAME: $ => $._MNEMONIC_NAME,
     //MODE: $ => $._MODE,
+    MODIFY: $ => $._MODIFY,
     //MOVE: $ => $._MOVE,
     MULTIPLE: $ => $._MULTIPLE,
     //MULTIPLY: $ => $._MULTIPLY,
@@ -3570,6 +4238,7 @@ module.exports = grammar({
     NUMERIC_EDITED: $ => $._NUMERIC_EDITED,
     NUMVALC_FUNC: $ => $._NUMVALC_FUNC,
     //OBJECT_COMPUTER: $ => $._OBJECT_COMPUTER,
+    OBTAIN: $ => $._OBTAIN,
     //OCCURS: $ => $._OCCURS,
     //OF: $ => $._OF,
     OFF: $ => $._OFF,
@@ -3585,13 +4254,16 @@ module.exports = grammar({
     OUTPUT: $ => $._OUTPUT,
     //OVERFLOW: $ => $._OVERFLOW,
     OVERLINE: $ => $._OVERLINE,
+    OWNER: $ => $._OWNER,
     PACKED_DECIMAL: $ => $._PACKED_DECIMAL,
     //PADDING: $ => $._PADDING,
     PAGE: $ => $._PAGE,
     //PAGE_FOOTING: $ => $._PAGE_FOOTING,
     //PAGE_HEADING: $ => $._PAGE_HEADING,
+    PAGE_INFO: $ => $._PAGE_INFO,
     PARAGRAPH: $ => $._PARAGRAPH,
     PERFORM: $ => $._PERFORM,
+    PERMANENT: $ => $._PERMANENT,
     //PIC: $ => $._PIC,
     //PICTURE: $ => $._PICTURE,
     //PLUS: $ => $._PLUS,
@@ -3602,6 +4274,7 @@ module.exports = grammar({
     PREVIOUS: $ => $._PREVIOUS,
     PRINTER: $ => $._PRINTER,
     //PRINTING: $ => $._PRINTING,
+    PRIOR: $ => $._PRIOR,
     PROCEDURE: $ => $._PROCEDURE,
     //PROCEDURES: $ => $._PROCEDURES,
     PROCEED: $ => $._PROCEED,
@@ -3610,10 +4283,12 @@ module.exports = grammar({
     //PROGRAM_NAME: $ => $._PROGRAM_NAME,
     PROGRAM_POINTER: $ => $._PROGRAM_POINTER,
     PROMPT: $ => $._PROMPT,
+    PROTECTED: $ => $._PROTECTED,
     QUOTE: $ => $._QUOTE,
     RANDOM: $ => $._RANDOM,
     //RD: $ => $._RD,
     READ: $ => $._READ,
+    READY: $ => $._READY,
     RECORD: $ => $._RECORD,
     //RECORDING: $ => $._RECORDING,
     //RECORDS: $ => $._RECORDS,
@@ -3635,6 +4310,7 @@ module.exports = grammar({
     //REPOSITORY: $ => $._REPOSITORY,
     REQUIRED: $ => $._REQUIRED,
     //RESERVE: $ => $._RESERVE,
+    RETRIEVAL: $ => $._RETRIEVAL,
     //RETURN: $ => $._RETURN,
     //RETURNING: $ => $._RETURNING,
     REVERSE_FUNC: $ => $._REVERSE_FUNC,
@@ -3642,9 +4318,10 @@ module.exports = grammar({
     REWIND: $ => $._REWIND,
     //REWRITE: $ => $._REWRITE,
     RIGHT: $ => $._RIGHT,
-    //ROLLBACK: $ => $._ROLLBACK,
+    ROLLBACK: $ => $._ROLLBACK,
     ROUNDED: $ => $._ROUNDED,
     //RUN: $ => $._RUN,
+    RUN_UNIT: $ => $._RUN_UNIT,
     //SAME: $ => $._SAME,
     //SCREEN: $ => $._SCREEN,
     //SCREEN_CONTROL: $ => $._SCREEN_CONTROL,
@@ -3655,6 +4332,7 @@ module.exports = grammar({
     //SECURE: $ => $._SECURE,
     //SEGMENT_LIMIT: $ => $._SEGMENT_LIMIT,
     //SELECT: $ => $._SELECT,
+    SELECTIVE: $ => $._SELECTIVE,
     //SEMI_COLON: $ => $._SEMI_COLON,
     //SENTENCE: $ => $._SENTENCE,
     SEPARATE: $ => $._SEPARATE,
@@ -3672,6 +4350,7 @@ module.exports = grammar({
     SORT: $ => $._SORT,
     SORT_MERGE: $ => $._SORT_MERGE,
     SOURCE: $ => $._SOURCE,
+    SQL: $ => /[sS][qQ][lL]/,
     //SOURCE_COMPUTER: $ => $._SOURCE_COMPUTER,
     SPACE: $ => $._SPACE,
     //SPECIAL_NAMES: $ => $._SPECIAL_NAMES,
@@ -3681,6 +4360,7 @@ module.exports = grammar({
     //START: $ => $._START,
     //STATUS: $ => $._STATUS,
     //STOP: $ => $._STOP,
+    STORE: $ => $._STORE,
     //STRING: $ => $._STRING,
     SUBSTITUTE_FUNC: $ => $._SUBSTITUTE_FUNC,
     SUBSTITUTE_CASE_FUNC: $ => $._SUBSTITUTE_CASE_FUNC,
@@ -3691,11 +4371,13 @@ module.exports = grammar({
     //SYNCHRONIZED: $ => $._SYNCHRONIZED,
     //TALLYING: $ => $._TALLYING,
     //TAPE: $ => $._TAPE,
+    TASK: $ => $._TASK,
     //TERMINATE: $ => $._TERMINATE,
     //TEST: $ => $._TEST,
     //THAN: $ => $._THAN,
     //THEN: $ => $._THEN,
     THRU: $ => $._THRU,
+    TRANSID: $ => $._TRANSID,
     TIME: $ => $._TIME,
     //TIMES: $ => $._TIMES,
     TO: $ => $._TO,
@@ -3728,6 +4410,7 @@ module.exports = grammar({
     //UPON_ENVIRONMENT_VALUE: $ => $._UPON_ENVIRONMENT_VALUE,
     UPPER_CASE_FUNC: $ => $._UPPER_CASE_FUNC,
     //USAGE: $ => $._USAGE,
+    USAGE_MODE: $ => $._USAGE_MODE,
     //USE: $ => $._USE,
     USING: $ => $._USING,
     VALUE: $ => $._VALUE,
@@ -3737,6 +4420,7 @@ module.exports = grammar({
     WHEN_COMPILED_FUNC: $ => $._WHEN_COMPILED_FUNC,
     //WHEN_OTHER: $ => $._WHEN_OTHER,
     //WITH: $ => $._WITH,
+    WITHIN: $ => $._WITHIN,
     WORD: $ => $._WORD,
     WORDS: $ => $._WORDS,
     //WORKING_STORAGE: $ => $._WORKING_STORAGE,

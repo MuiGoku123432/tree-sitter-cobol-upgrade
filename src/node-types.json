@@ -125,6 +125,11 @@
     "fields": {}
   },
   {
+    "type": "BIND",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "BLANK_LINE",
     "named": true,
     "fields": {}
@@ -145,12 +150,22 @@
     "fields": {}
   },
   {
+    "type": "CALC",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "CHAINING",
     "named": true,
     "fields": {}
   },
   {
     "type": "CHARACTERS",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "CICS",
     "named": true,
     "fields": {}
   },
@@ -166,6 +181,11 @@
   },
   {
     "type": "COMMAND_LINE",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "COMMIT",
     "named": true,
     "fields": {}
   },
@@ -215,12 +235,32 @@
     "fields": {}
   },
   {
+    "type": "CONNECT",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "CONTINUE",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "CORRESPONDING",
     "named": true,
     "fields": {}
   },
   {
     "type": "CRT",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "CURRENCY",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "CURRENT",
     "named": true,
     "fields": {}
   },
@@ -250,6 +290,16 @@
     "fields": {}
   },
   {
+    "type": "DBNAME",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "DB_KEY",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "DEFAULT",
     "named": true,
     "fields": {}
@@ -261,6 +311,11 @@
   },
   {
     "type": "DESCENDING",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "DISCONNECT",
     "named": true,
     "fields": {}
   },
@@ -331,6 +386,11 @@
   },
   {
     "type": "END_EVALUATE",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "END_EXEC",
     "named": true,
     "fields": {}
   },
@@ -430,6 +490,11 @@
     "fields": {}
   },
   {
+    "type": "EXEC",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "EXTEND",
     "named": true,
     "fields": {}
@@ -465,6 +530,16 @@
     "fields": {}
   },
   {
+    "type": "FIND",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "FINISH",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "FIRST",
     "named": true,
     "fields": {}
@@ -480,7 +555,17 @@
     "fields": {}
   },
   {
+    "type": "FROM",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "FULL",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "GET",
     "named": true,
     "fields": {}
   },
@@ -525,12 +610,27 @@
     "fields": {}
   },
   {
+    "type": "IS",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "I_O",
     "named": true,
     "fields": {}
   },
   {
+    "type": "KEEP",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "KEY",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "LAST",
     "named": true,
     "fields": {}
   },
@@ -621,7 +721,27 @@
     "fields": {}
   },
   {
+    "type": "MAP",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "MAPSET",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "MEMBERS",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "MNEMONIC_NAME",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "MODIFY",
     "named": true,
     "fields": {}
   },
@@ -676,6 +796,11 @@
     "fields": {}
   },
   {
+    "type": "OBTAIN",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "OFF",
     "named": true,
     "fields": {}
@@ -716,6 +841,11 @@
     "fields": {}
   },
   {
+    "type": "OWNER",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "PACKED_DECIMAL",
     "named": true,
     "fields": {}
@@ -726,12 +856,22 @@
     "fields": {}
   },
   {
+    "type": "PAGE_INFO",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "PARAGRAPH",
     "named": true,
     "fields": {}
   },
   {
     "type": "PERFORM",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "PERMANENT",
     "named": true,
     "fields": {}
   },
@@ -761,6 +901,11 @@
     "fields": {}
   },
   {
+    "type": "PRIOR",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "PROCEDURE",
     "named": true,
     "fields": {}
@@ -786,6 +931,11 @@
     "fields": {}
   },
   {
+    "type": "PROTECTED",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "QUOTE",
     "named": true,
     "fields": {}
@@ -797,6 +947,11 @@
   },
   {
     "type": "READ",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "READY",
     "named": true,
     "fields": {}
   },
@@ -831,6 +986,11 @@
     "fields": {}
   },
   {
+    "type": "RETRIEVAL",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "REVERSE_FUNC",
     "named": true,
     "fields": {}
@@ -851,7 +1011,17 @@
     "fields": {}
   },
   {
+    "type": "ROLLBACK",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "ROUNDED",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "RUN_UNIT",
     "named": true,
     "fields": {}
   },
@@ -867,6 +1037,11 @@
   },
   {
     "type": "SECTION",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "SELECTIVE",
     "named": true,
     "fields": {}
   },
@@ -941,6 +1116,11 @@
     "fields": {}
   },
   {
+    "type": "STORE",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "SUBSTITUTE_CASE_FUNC",
     "named": true,
     "fields": {}
@@ -952,6 +1132,11 @@
   },
   {
     "type": "SUPPRESS",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "TASK",
     "named": true,
     "fields": {}
   },
@@ -977,6 +1162,11 @@
   },
   {
     "type": "TRAILING",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "TRANSID",
     "named": true,
     "fields": {}
   },
@@ -1041,6 +1231,11 @@
     "fields": {}
   },
   {
+    "type": "USAGE_MODE",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "USING",
     "named": true,
     "fields": {}
@@ -1062,6 +1257,11 @@
   },
   {
     "type": "WHEN_COMPILED_FUNC",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "WITHIN",
     "named": true,
     "fields": {}
   },
@@ -2771,6 +2971,181 @@
     }
   },
   {
+    "type": "cics_map_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cics_mapset_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cics_program_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cics_transaction_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cics_unparsed_tail",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "class_item",
     "named": true,
     "fields": {},
@@ -4389,21 +4764,6 @@
     }
   },
   {
-    "type": "end_function",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "program_name",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "end_program",
     "named": true,
     "fields": {},
@@ -4500,6 +4860,240 @@
       "types": [
         {
           "type": "qualified_word",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "exec_cics_statement",
+    "named": true,
+    "fields": {
+      "command": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "CICS",
+          "named": true
+        },
+        {
+          "type": "END_EXEC",
+          "named": true
+        },
+        {
+          "type": "EXEC",
+          "named": true
+        },
+        {
+          "type": "MAP",
+          "named": true
+        },
+        {
+          "type": "MAPSET",
+          "named": true
+        },
+        {
+          "type": "PROGRAM",
+          "named": true
+        },
+        {
+          "type": "TRANSID",
+          "named": true
+        },
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "cics_map_name",
+          "named": true
+        },
+        {
+          "type": "cics_mapset_name",
+          "named": true
+        },
+        {
+          "type": "cics_program_name",
+          "named": true
+        },
+        {
+          "type": "cics_transaction_name",
+          "named": true
+        },
+        {
+          "type": "cics_unparsed_tail",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "exec_sql_declare_section",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "END_EXEC",
+          "named": true
+        },
+        {
+          "type": "EXEC",
+          "named": true
+        },
+        {
+          "type": "SQL",
+          "named": true
+        },
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "exec_sql_include",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "END_EXEC",
+          "named": true
+        },
+        {
+          "type": "EXEC",
+          "named": true
+        },
+        {
+          "type": "SQL",
+          "named": true
+        },
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_include_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "exec_sql_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "END_EXEC",
+          "named": true
+        },
+        {
+          "type": "EXEC",
+          "named": true
+        },
+        {
+          "type": "SQL",
+          "named": true
+        },
+        {
+          "type": "sql_alter_table_statement",
+          "named": true
+        },
+        {
+          "type": "sql_create_table_statement",
+          "named": true
+        },
+        {
+          "type": "sql_cte_clause",
+          "named": true
+        },
+        {
+          "type": "sql_declare_cursor_statement",
+          "named": true
+        },
+        {
+          "type": "sql_delete_statement",
+          "named": true
+        },
+        {
+          "type": "sql_drop_table_statement",
+          "named": true
+        },
+        {
+          "type": "sql_insert_statement",
+          "named": true
+        },
+        {
+          "type": "sql_merge_statement",
+          "named": true
+        },
+        {
+          "type": "sql_prepare_statement",
+          "named": true
+        },
+        {
+          "type": "sql_select_query",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        },
+        {
+          "type": "sql_update_statement",
           "named": true
         }
       ]
@@ -5395,25 +5989,6 @@
     }
   },
   {
-    "type": "function_division",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "as_literal",
-          "named": true
-        },
-        {
-          "type": "program_name",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "ge",
     "named": true,
     "fields": {}
@@ -5581,6 +6156,392 @@
         },
         {
           "type": "security_section",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_accept_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "CURRENCY",
+          "named": true
+        },
+        {
+          "type": "NEXT",
+          "named": true
+        },
+        {
+          "type": "OWNER",
+          "named": true
+        },
+        {
+          "type": "PRIOR",
+          "named": true
+        },
+        {
+          "type": "idms_record_name",
+          "named": true
+        },
+        {
+          "type": "idms_unparsed_tail",
+          "named": true
+        },
+        {
+          "type": "qualified_word",
+          "named": true
+        },
+        {
+          "type": "refmod",
+          "named": true
+        },
+        {
+          "type": "subref",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_navigation_statement",
+    "named": true,
+    "fields": {
+      "verb": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "FIND",
+            "named": true
+          },
+          {
+            "type": "OBTAIN",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "ANY",
+          "named": true
+        },
+        {
+          "type": "CALC",
+          "named": true
+        },
+        {
+          "type": "CURRENT",
+          "named": true
+        },
+        {
+          "type": "DB_KEY",
+          "named": true
+        },
+        {
+          "type": "EXCLUSIVE",
+          "named": true
+        },
+        {
+          "type": "FIRST",
+          "named": true
+        },
+        {
+          "type": "IS",
+          "named": true
+        },
+        {
+          "type": "KEEP",
+          "named": true
+        },
+        {
+          "type": "LAST",
+          "named": true
+        },
+        {
+          "type": "NEXT",
+          "named": true
+        },
+        {
+          "type": "OWNER",
+          "named": true
+        },
+        {
+          "type": "PAGE_INFO",
+          "named": true
+        },
+        {
+          "type": "PRIOR",
+          "named": true
+        },
+        {
+          "type": "WITHIN",
+          "named": true
+        },
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "idms_record_name",
+          "named": true
+        },
+        {
+          "type": "idms_set_name",
+          "named": true
+        },
+        {
+          "type": "idms_unparsed_tail",
+          "named": true
+        },
+        {
+          "type": "integer",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_record_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_session_statement",
+    "named": true,
+    "fields": {
+      "verb": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "BIND",
+            "named": true
+          },
+          {
+            "type": "COMMIT",
+            "named": true
+          },
+          {
+            "type": "FINISH",
+            "named": true
+          },
+          {
+            "type": "READY",
+            "named": true
+          },
+          {
+            "type": "ROLLBACK",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "ALL",
+          "named": true
+        },
+        {
+          "type": "CONTINUE",
+          "named": true
+        },
+        {
+          "type": "DBNAME",
+          "named": true
+        },
+        {
+          "type": "EXCLUSIVE",
+          "named": true
+        },
+        {
+          "type": "IS",
+          "named": true
+        },
+        {
+          "type": "PROTECTED",
+          "named": true
+        },
+        {
+          "type": "RETRIEVAL",
+          "named": true
+        },
+        {
+          "type": "RUN_UNIT",
+          "named": true
+        },
+        {
+          "type": "TASK",
+          "named": true
+        },
+        {
+          "type": "UPDATE",
+          "named": true
+        },
+        {
+          "type": "USAGE_MODE",
+          "named": true
+        },
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "idms_record_name",
+          "named": true
+        },
+        {
+          "type": "idms_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_set_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_unparsed_tail",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_update_statement",
+    "named": true,
+    "fields": {
+      "verb": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "CONNECT",
+            "named": true
+          },
+          {
+            "type": "DISCONNECT",
+            "named": true
+          },
+          {
+            "type": "ERASE",
+            "named": true
+          },
+          {
+            "type": "GET",
+            "named": true
+          },
+          {
+            "type": "MODIFY",
+            "named": true
+          },
+          {
+            "type": "STORE",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "ALL",
+          "named": true
+        },
+        {
+          "type": "FROM",
+          "named": true
+        },
+        {
+          "type": "MEMBERS",
+          "named": true
+        },
+        {
+          "type": "PERMANENT",
+          "named": true
+        },
+        {
+          "type": "SELECTIVE",
+          "named": true
+        },
+        {
+          "type": "TO",
+          "named": true
+        },
+        {
+          "type": "idms_record_name",
+          "named": true
+        },
+        {
+          "type": "idms_set_name",
+          "named": true
+        },
+        {
+          "type": "idms_unparsed_tail",
           "named": true
         }
       ]
@@ -9345,6 +10306,18 @@
           "named": true
         },
         {
+          "type": "exec_cics_statement",
+          "named": true
+        },
+        {
+          "type": "exec_sql_include",
+          "named": true
+        },
+        {
+          "type": "exec_sql_statement",
+          "named": true
+        },
+        {
           "type": "exit_statement",
           "named": true
         },
@@ -9354,6 +10327,22 @@
         },
         {
           "type": "goto_statement",
+          "named": true
+        },
+        {
+          "type": "idms_accept_statement",
+          "named": true
+        },
+        {
+          "type": "idms_navigation_statement",
+          "named": true
+        },
+        {
+          "type": "idms_session_statement",
+          "named": true
+        },
+        {
+          "type": "idms_update_statement",
           "named": true
         },
         {
@@ -9672,6 +10661,18 @@
           "named": true
         },
         {
+          "type": "exec_cics_statement",
+          "named": true
+        },
+        {
+          "type": "exec_sql_include",
+          "named": true
+        },
+        {
+          "type": "exec_sql_statement",
+          "named": true
+        },
+        {
           "type": "exit_statement",
           "named": true
         },
@@ -9681,6 +10682,22 @@
         },
         {
           "type": "goto_statement",
+          "named": true
+        },
+        {
+          "type": "idms_accept_statement",
+          "named": true
+        },
+        {
+          "type": "idms_navigation_statement",
+          "named": true
+        },
+        {
+          "type": "idms_session_statement",
+          "named": true
+        },
+        {
+          "type": "idms_update_statement",
           "named": true
         },
         {
@@ -10148,6 +11165,14 @@
       "types": [
         {
           "type": "data_description",
+          "named": true
+        },
+        {
+          "type": "exec_sql_declare_section",
+          "named": true
+        },
+        {
+          "type": "exec_sql_include",
           "named": true
         }
       ]
@@ -12144,8 +13169,585 @@
     }
   },
   {
+    "type": "sql_alter_table_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_create_table_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_cte_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "sql_cte_definition",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_cte_definition",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_cte_name",
+          "named": true
+        },
+        {
+          "type": "sql_select_query",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_cte_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_declare_cursor_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_delimited_identifier",
+          "named": true
+        },
+        {
+          "type": "sql_select_query",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_delete_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_drop_table_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_dynamic_source",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_include_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_insert_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_merge_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        },
+        {
+          "type": "sql_using_reference",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_nested_query",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "sql_select_query",
+          "named": true
+        },
+        {
+          "type": "sql_table_alias",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_prepare_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_dynamic_source",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_select_query",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "sql_nested_query",
+          "named": true
+        },
+        {
+          "type": "sql_source_reference",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_source_candidate",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "sql_table_alias",
+          "named": true
+        },
+        {
+          "type": "sql_table_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_source_reference",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "sql_nested_query",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_table_alias",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_delimited_identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_table_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_delimited_identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_unparsed_tail",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "h_string",
+          "named": true
+        },
+        {
+          "type": "n_string",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "sql_delimited_identifier",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "x_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_update_statement",
+    "named": true,
+    "fields": {
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "WORD",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        },
+        {
+          "type": "sql_unparsed_tail",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_using_reference",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "sql_source_candidate",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "start",
     "named": true,
+    "root": true,
     "fields": {},
     "children": {
       "multiple": true,
@@ -14083,6 +15685,14 @@
         {
           "type": "data_description",
           "named": true
+        },
+        {
+          "type": "exec_sql_declare_section",
+          "named": true
+        },
+        {
+          "type": "exec_sql_include",
+          "named": true
         }
       ]
     }
@@ -14264,6 +15874,10 @@
     "fields": {}
   },
   {
+    "type": "!",
+    "named": false
+  },
+  {
     "type": "&",
     "named": false
   },
@@ -14285,6 +15899,10 @@
   },
   {
     "type": "+",
+    "named": false
+  },
+  {
+    "type": ",",
     "named": false
   },
   {
@@ -14536,6 +16154,10 @@
     "named": false
   },
   {
+    "type": "SQL",
+    "named": true
+  },
+  {
     "type": "Space",
     "named": false
   },
@@ -14688,6 +16310,10 @@
     "named": false
   },
   {
+    "type": "sql_delimited_identifier",
+    "named": true
+  },
+  {
     "type": "zero",
     "named": false
   },
@@ -14697,6 +16323,10 @@
   },
   {
     "type": "zeros",
+    "named": false
+  },
+  {
+    "type": "|",
     "named": false
   }
 ]

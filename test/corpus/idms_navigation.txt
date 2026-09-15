@@ -1,0 +1,216 @@
+====================================
+idms navigation obtain next within set
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN NEXT CUSTOMER-REC WITHIN CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (NEXT)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_set_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation lowercase
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       obtain next Customer-Rec within CUST-order-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (NEXT)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_set_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation db-key
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN CUSTOMER-REC DB-KEY IS WS-DB-KEY.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (idms_record_name
+          (WORD))
+        (DB_KEY)
+        (IS)
+        (WORD))
+      (period))))
+
+====================================
+idms navigation calc
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND CALC CUSTOMER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (CALC)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation owner
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND OWNER WITHIN CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (OWNER)
+        (WITHIN)
+        (idms_set_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation current
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND CURRENT WITHIN CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (CURRENT)
+        (WITHIN)
+        (idms_set_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation keep exclusive
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN KEEP EXCLUSIVE CUSTOMER-REC DB-KEY IS WS-DB-KEY.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (KEEP)
+        (EXCLUSIVE)
+        (idms_record_name
+          (WORD))
+        (DB_KEY)
+        (IS)
+        (WORD))
+      (period))))
+
+====================================
+idms navigation unparsed tail
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND CALC CUSTOMER-REC WS-STATUS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (CALC)
+        (idms_record_name
+          (WORD))
+        (idms_unparsed_tail
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation two statements one sentence
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN NEXT CUSTOMER-REC WITHIN CUST-ORDER-SET
+       OBTAIN NEXT CUSTOMER-REC WITHIN CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (NEXT)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_set_name
+          (WORD)))
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (NEXT)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_set_name
+          (WORD)))
+      (period))))

@@ -1,0 +1,12 @@
+       identification division.
+       program-id. idms-query-sample.
+       procedure division.
+       OBTAIN NEXT CUSTOMER-REC WITHIN CUST-ORDER-SET.
+       OBTAIN CUSTOMER-REC DB-KEY IS WS-DB-KEY.
+       FIND CALC CUSTOMER-REC.
+       FIND OWNER WITHIN CUST-ORDER-SET.
+       CONNECT CUSTOMER-REC TO CUST-ORDER-SET.
+       DISCONNECT CUSTOMER-REC FROM CUST-ORDER-SET.
+       BIND CUSTOMER-REC.
+       ACCEPT WS-DB-KEY FROM CUSTOMER-REC CURRENCY.
+       stop run.
