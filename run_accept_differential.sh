@@ -110,7 +110,7 @@
 # against. Output goes to stdout only; redirect it yourself if you need a
 # copy, and keep that redirect target outside the working tree.
 
-TOP_DIR=$(cd "$(dirname "$0")" && pwd)
+TOP_DIR=$(cd -P "$(dirname "$0")" && pwd)
 TREE_SITTER=${TREE_SITTER:-$TOP_DIR/node_modules/.bin/tree-sitter}
 DIFF_TMP=${DIFF_TMP:-}
 CORPUS_DIR=${CORPUS_DIR:-}
@@ -151,29 +151,41 @@ usage() {
 
 # ---------------------------------------------------------------------------
 # Estate guard (T-02-02): refuse a write target that resolves under this
-# repository's root. Resolves the CANDIDATE's parent directory to an
-# absolute path and compares by prefix -- not a naive string match on the
-# raw argument, so a relative-path trick can't evade it.
+# repository's root. Existing final components and directories are resolved
+# strictly through symlinks. A new file is accepted only after its existing
+# parent is resolved strictly. Return 2 when containment cannot be proved.
 # ---------------------------------------------------------------------------
 path_is_under_repo() {
     CANDIDATE="$1"
-    CANDIDATE_DIR=$(dirname "$CANDIDATE")
-    CANDIDATE_BASE=$(basename "$CANDIDATE")
-    CANDIDATE_DIR_ABS=$(cd "$CANDIDATE_DIR" 2>/dev/null && pwd)
-    if [ -z "$CANDIDATE_DIR_ABS" ]; then
-        # Parent directory doesn't exist yet -- the write will fail on its
-        # own merits. Treating it as outside cannot create an inventory.
-        return 1
-    fi
-    CANDIDATE_ABS="$CANDIDATE_DIR_ABS/$CANDIDATE_BASE"
-    case "$CANDIDATE_ABS" in
-        "$TOP_DIR"|"$TOP_DIR"/*)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+    CANDIDATE_KIND="${2:-file}"
+    python3 - "$TOP_DIR" "$CANDIDATE" "$CANDIDATE_KIND" <<'PY'
+import os
+import pathlib
+import sys
+
+repo_arg, candidate_arg, kind = sys.argv[1:]
+try:
+    repo = pathlib.Path(repo_arg).resolve(strict=True)
+    candidate = pathlib.Path(candidate_arg)
+    if kind == "dir":
+        resolved = candidate.resolve(strict=True)
+        if not resolved.is_dir():
+            raise NotADirectoryError(candidate)
+    elif kind == "file":
+        if candidate.exists() or candidate.is_symlink():
+            resolved = candidate.resolve(strict=True)
+        else:
+            parent = candidate.parent.resolve(strict=True)
+            if not parent.is_dir():
+                raise NotADirectoryError(parent)
+            resolved = parent / candidate.name
+    else:
+        raise ValueError(f"unsupported candidate kind: {kind}")
+    under_repo = os.path.commonpath((str(repo), str(resolved))) == str(repo)
+except (OSError, RuntimeError, ValueError):
+    sys.exit(2)
+sys.exit(0 if under_repo else 1)
+PY
 }
 
 # ---------------------------------------------------------------------------
@@ -196,12 +208,18 @@ cmd_snapshot() {
         report "snapshot: FAIL - wall-clock timeout command not found: $WALL_TIMEOUT_BIN"
         return 1
     fi
-    if path_is_under_repo "$SNAP_OUT_FILE"; then
+    path_is_under_repo "$SNAP_OUT_FILE" file
+    SNAP_PATH_STATUS=$?
+    if [ "$SNAP_PATH_STATUS" -eq 0 ]; then
         report "snapshot: REFUSED - output path resolves under the repository root ($TOP_DIR); corpus-derived inventories must never be written inside the working tree (T-02-02)"
         return 1
     fi
+    if [ "$SNAP_PATH_STATUS" -ne 1 ]; then
+        report "snapshot: REFUSED - output path could not be canonicalized safely"
+        return 1
+    fi
 
-    SNAP_CORPUS_DIR_ABS=$(cd "$SNAP_CORPUS_DIR" && pwd)
+    SNAP_CORPUS_DIR_ABS=$(cd -P "$SNAP_CORPUS_DIR" && pwd)
     if [ -z "$SNAP_CORPUS_DIR_ABS" ]; then
         report "snapshot: FAIL - could not resolve corpus directory to an absolute path: $SNAP_CORPUS_DIR"
         return 1
@@ -879,8 +897,26 @@ cmd_run() {
         report "run: FAIL - could not create/resolve a scratch directory"
         return 1
     fi
-    if path_is_under_repo "$RUN_DIFF_TMP"; then
+    path_is_under_repo "$RUN_DIFF_TMP" dir
+    RUN_PATH_STATUS=$?
+    if [ "$RUN_PATH_STATUS" -eq 0 ]; then
         report "run: REFUSED - DIFF_TMP resolves under the repository root"
+        [ "$RUN_DIFF_TMP_OWNED" -eq 1 ] && rmdir "$RUN_DIFF_TMP" 2>/dev/null
+        return 1
+    fi
+    if [ "$RUN_PATH_STATUS" -ne 1 ]; then
+        report "run: REFUSED - DIFF_TMP could not be canonicalized safely"
+        [ "$RUN_DIFF_TMP_OWNED" -eq 1 ] && rmdir "$RUN_DIFF_TMP" 2>/dev/null
+        return 1
+    fi
+    RUN_DIFF_TMP="$(python3 - "$RUN_DIFF_TMP" <<'PY'
+import pathlib
+import sys
+print(pathlib.Path(sys.argv[1]).resolve(strict=True))
+PY
+)"
+    if [ $? -ne 0 ] || [ -z "$RUN_DIFF_TMP" ]; then
+        report "run: REFUSED - DIFF_TMP could not be canonicalized safely"
         return 1
     fi
 

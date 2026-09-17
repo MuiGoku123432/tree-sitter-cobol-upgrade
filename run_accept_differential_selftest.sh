@@ -15,7 +15,13 @@ if [ $? -ne 0 ] || [ -z "$SCRATCH" ]; then
     echo "accept-differential-selftest: FAIL - could not create scratch directory"
     exit 1
 fi
-trap 'rm -rf "$SCRATCH"' EXIT INT TERM
+REPO_PROBE_DIR="$ORIG_DIR/.accept-differential-selftest-$(basename "$SCRATCH")"
+if ! mkdir "$REPO_PROBE_DIR"; then
+    echo "accept-differential-selftest: FAIL - could not create repository-boundary probe"
+    rm -rf "$SCRATCH"
+    exit 1
+fi
+trap 'rm -rf "$SCRATCH" "$REPO_PROBE_DIR"' EXIT INT TERM
 
 RETURN_CODE=0
 
@@ -47,6 +53,73 @@ TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
 if [ $? -eq 0 ]; then
     echo "accept-differential-selftest: FAIL - empty source denominator was accepted"
     RETURN_CODE=1
+fi
+
+# T-02-R01 adversarial path cases use only synthetic data. Each invocation
+# reaches the public snapshot entry point and must fail before creating or
+# changing any repository target.
+PARENT_LINK="$SCRATCH/repo-parent-link"
+ln -s "$REPO_PROBE_DIR" "$PARENT_LINK"
+PARENT_LINK_OUT="$(TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$SCRATCH/extensionless-corpus" "$PARENT_LINK/parent-link.tsv" 2>&1)"
+PARENT_LINK_CODE=$?
+if [ "$PARENT_LINK_CODE" -eq 0 ] || [ -e "$REPO_PROBE_DIR/parent-link.tsv" ]; then
+    echo "accept-differential-selftest: FAIL - parent symlink snapshot escaped containment"
+    RETURN_CODE=1
+else
+    echo "Case 17 (parent symlink snapshot is refused): PASS"
+fi
+
+FINAL_TARGET="$REPO_PROBE_DIR/final-target.tsv"
+printf '%s\n' 'sentinel-bytes' > "$FINAL_TARGET"
+FINAL_LINK="$SCRATCH/final-link.tsv"
+ln -s "$FINAL_TARGET" "$FINAL_LINK"
+FINAL_BEFORE="$(shasum -a 256 "$FINAL_TARGET")"
+FINAL_LINK_OUT="$(TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$SCRATCH/extensionless-corpus" "$FINAL_LINK" 2>&1)"
+FINAL_LINK_CODE=$?
+FINAL_AFTER="$(shasum -a 256 "$FINAL_TARGET")"
+if [ "$FINAL_LINK_CODE" -eq 0 ] || [ ! -L "$FINAL_LINK" ] || [ "$FINAL_BEFORE" != "$FINAL_AFTER" ]; then
+    echo "accept-differential-selftest: FAIL - existing final symlink snapshot changed repository target"
+    RETURN_CODE=1
+else
+    echo "Case 18 (existing final symlink snapshot is refused unchanged): PASS"
+fi
+
+DANGLING_TARGET="$REPO_PROBE_DIR/missing-target.tsv"
+DANGLING_LINK="$SCRATCH/dangling-link.tsv"
+ln -s "$DANGLING_TARGET" "$DANGLING_LINK"
+DANGLING_OUT="$(TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$SCRATCH/extensionless-corpus" "$DANGLING_LINK" 2>&1)"
+DANGLING_CODE=$?
+if [ "$DANGLING_CODE" -eq 0 ] || [ ! -L "$DANGLING_LINK" ] || [ -e "$DANGLING_TARGET" ]; then
+    echo "accept-differential-selftest: FAIL - dangling final symlink snapshot was not fail-closed"
+    RETURN_CODE=1
+else
+    echo "Case 19 (dangling final symlink snapshot is refused): PASS"
+fi
+
+MISSING_PARENT="$SCRATCH/missing-parent/out.tsv"
+MISSING_PARENT_OUT="$(TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$SCRATCH/extensionless-corpus" "$MISSING_PARENT" 2>&1)"
+MISSING_PARENT_CODE=$?
+if [ "$MISSING_PARENT_CODE" -eq 0 ] || [ -e "$MISSING_PARENT" ]; then
+    echo "accept-differential-selftest: FAIL - uncanonicalizable snapshot parent was accepted"
+    RETURN_CODE=1
+else
+    echo "Case 20 (uncanonicalizable snapshot parent is refused): PASS"
+fi
+
+EXISTING_EXTERNAL_OUT="$SCRATCH/existing-external.tsv"
+printf '%s\n' 'old-output' > "$EXISTING_EXTERNAL_OUT"
+EXISTING_EXTERNAL_LOG="$(TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$SCRATCH/extensionless-corpus" "$EXISTING_EXTERNAL_OUT" 2>&1)"
+EXISTING_EXTERNAL_CODE=$?
+if [ "$EXISTING_EXTERNAL_CODE" -ne 0 ] || [ "$(wc -l < "$EXISTING_EXTERNAL_OUT" | tr -d ' ')" -ne 1 ]; then
+    echo "accept-differential-selftest: FAIL - existing external output control was rejected"
+    RETURN_CODE=1
+else
+    echo "Case 21 (existing external output remains usable): PASS"
 fi
 
 report_case() {
@@ -243,6 +316,23 @@ MALFORMED_OUT="$(DIFF_TMP="$MALFORMED_TMP" TREE_SITTER=true cmd_run HEAD "$TRACE
 MALFORMED_CODE=$?
 report_case 15 "malformed text prefilter fails closed" FAIL "$MALFORMED_CODE"
 require_output_contains 15 "malformed text prefilter fails closed" "$MALFORMED_OUT" 'run: FAIL - invalid text prefilter regex'
+finish_case
+
+RUN_LINK="$SCRATCH/repo-run-link"
+ln -s "$REPO_PROBE_DIR" "$RUN_LINK"
+RUN_LINK_OUT="$(DIFF_TMP="$RUN_LINK" TREE_SITTER=true cmd_run HEAD "$TRACER_CORPUS" 2>&1)"
+RUN_LINK_CODE=$?
+report_case 22 "DIFF_TMP symlink into repository is refused" FAIL "$RUN_LINK_CODE"
+require_output_contains 22 "DIFF_TMP symlink into repository is refused" "$RUN_LINK_OUT" 'run: REFUSED - DIFF_TMP resolves under the repository root'
+if [ -e "$REPO_PROBE_DIR/accept-differential-worktree" ] ||
+   [ -e "$REPO_PROBE_DIR/before-inventory.txt" ] ||
+   [ -e "$REPO_PROBE_DIR/after-inventory.txt" ] ||
+   [ -e "$REPO_PROBE_DIR/selected-paths.bin" ] ||
+   [ -e "$REPO_PROBE_DIR/baseline-inventory-helper" ] ||
+   [ -e "$REPO_PROBE_DIR/current-inventory-helper" ]; then
+    CASE_RESULT="FAIL (run created repository artifacts before refusal)"
+    RETURN_CODE=1
+fi
 finish_case
 
 B1="$SCRATCH/before1.txt"; A1="$SCRATCH/after1.txt"
