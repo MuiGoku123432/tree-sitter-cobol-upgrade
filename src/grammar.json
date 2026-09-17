@@ -7127,6 +7127,15 @@
           "name": "idms_accept_statement"
         },
         {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_idms_invalid_update_statement"
+          },
+          "named": true,
+          "value": "ERROR"
+        },
+        {
           "type": "SYMBOL",
           "name": "idms_navigation_statement"
         },
@@ -13972,65 +13981,49 @@
       ]
     },
     "idms_update_statement": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "FIELD",
-          "name": "verb",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "STORE"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "MODIFY"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "ERASE"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "CONNECT"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "DISCONNECT"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "GET"
-              }
-            ]
-          }
-        },
-        {
-          "type": "CHOICE",
+          "type": "SEQ",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "_idms_update_body"
+              "type": "FIELD",
+              "name": "verb",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "STORE"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "MODIFY"
+                  }
+                ]
+              }
             },
             {
-              "type": "BLANK"
+              "type": "SYMBOL",
+              "name": "idms_record_name"
             }
           ]
-        }
-      ]
-    },
-    "_idms_update_body": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "idms_record_name"
         },
         {
-          "type": "CHOICE",
+          "type": "SEQ",
           "members": [
+            {
+              "type": "FIELD",
+              "name": "verb",
+              "content": {
+                "type": "SYMBOL",
+                "name": "ERASE"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "idms_record_name"
+            },
             {
               "type": "CHOICE",
               "members": [
@@ -14038,86 +14031,338 @@
                   "type": "SEQ",
                   "members": [
                     {
-                      "type": "SYMBOL",
-                      "name": "TO"
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "ALL"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "PERMANENT"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "SELECTIVE"
+                        }
+                      ]
                     },
                     {
-                      "type": "SYMBOL",
-                      "name": "idms_set_name"
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "MEMBERS"
+                        },
+                        {
+                          "type": "BLANK"
+                        }
+                      ]
                     }
                   ]
                 },
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "FROM"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "idms_set_name"
-                    }
-                  ]
+                  "type": "BLANK"
                 }
               ]
             },
             {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SEQ",
+              "type": "CHOICE",
               "members": [
                 {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "ALL"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "PERMANENT"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "SELECTIVE"
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "idms_unparsed_tail"
                 },
                 {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "MEMBERS"
-                    },
-                    {
-                      "type": "BLANK"
-                    }
-                  ]
+                  "type": "BLANK"
                 }
               ]
-            },
-            {
-              "type": "BLANK"
             }
           ]
         },
         {
-          "type": "CHOICE",
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "verb",
+              "content": {
+                "type": "SYMBOL",
+                "name": "CONNECT"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "idms_record_name"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "TO"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "idms_set_name"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "verb",
+              "content": {
+                "type": "SYMBOL",
+                "name": "DISCONNECT"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "idms_record_name"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "FROM"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "idms_set_name"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "verb",
+              "content": {
+                "type": "SYMBOL",
+                "name": "GET"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "idms_record_name"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "_idms_invalid_update_statement": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "STORE"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "MODIFY"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "ERASE"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "CONNECT"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "DISCONNECT"
+                }
+              ]
+            },
+            {
+              "type": "STRING",
+              "value": "."
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "STORE"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "MODIFY"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "GET"
+                }
+              ]
+            },
+            {
+              "type": "SYMBOL",
+              "name": "WORD"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "TO"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "FROM"
+                }
+              ]
+            },
+            {
+              "type": "SYMBOL",
+              "name": "WORD"
+            },
+            {
+              "type": "STRING",
+              "value": "."
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
           "members": [
             {
               "type": "SYMBOL",
-              "name": "idms_unparsed_tail"
+              "name": "CONNECT"
             },
             {
-              "type": "BLANK"
+              "type": "SYMBOL",
+              "name": "WORD"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "FROM"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "WORD"
+            },
+            {
+              "type": "STRING",
+              "value": "."
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "DISCONNECT"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "WORD"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "TO"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "WORD"
+            },
+            {
+              "type": "STRING",
+              "value": "."
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "STORE"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "MODIFY"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "CONNECT"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "DISCONNECT"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "GET"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "WORD"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "ALL"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "PERMANENT"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "SELECTIVE"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "MEMBERS"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "STRING",
+              "value": "."
             }
           ]
         }

@@ -480,6 +480,69 @@
     "fields": {}
   },
   {
+    "type": "ERROR",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "ALL",
+          "named": true
+        },
+        {
+          "type": "CONNECT",
+          "named": true
+        },
+        {
+          "type": "DISCONNECT",
+          "named": true
+        },
+        {
+          "type": "ERASE",
+          "named": true
+        },
+        {
+          "type": "FROM",
+          "named": true
+        },
+        {
+          "type": "GET",
+          "named": true
+        },
+        {
+          "type": "MEMBERS",
+          "named": true
+        },
+        {
+          "type": "MODIFY",
+          "named": true
+        },
+        {
+          "type": "PERMANENT",
+          "named": true
+        },
+        {
+          "type": "SELECTIVE",
+          "named": true
+        },
+        {
+          "type": "STORE",
+          "named": true
+        },
+        {
+          "type": "TO",
+          "named": true
+        },
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "ESCAPE",
     "named": true,
     "fields": {}
@@ -10238,6 +10301,10 @@
           "named": true
         },
         {
+          "type": "ERROR",
+          "named": true
+        },
+        {
           "type": "accept_statement",
           "named": true
         },
@@ -10590,6 +10657,10 @@
         },
         {
           "type": "END_WRITE",
+          "named": true
+        },
+        {
+          "type": "ERROR",
           "named": true
         },
         {

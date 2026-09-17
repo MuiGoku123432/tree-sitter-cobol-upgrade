@@ -33,8 +33,7 @@ idms update invalid bare store
       (program_name))
     (procedure_division
       (ERROR
-        (STORE))
-      (period))))
+        (STORE)))))
 
 ====================================
 idms update invalid bare modify
@@ -51,8 +50,7 @@ idms update invalid bare modify
       (program_name))
     (procedure_division
       (ERROR
-        (MODIFY))
-      (period))))
+        (MODIFY)))))
 
 ====================================
 idms update invalid bare erase
@@ -69,8 +67,7 @@ idms update invalid bare erase
       (program_name))
     (procedure_division
       (ERROR
-        (ERASE))
-      (period))))
+        (ERASE)))))
 
 ====================================
 idms update invalid bare connect
@@ -87,8 +84,7 @@ idms update invalid bare connect
       (program_name))
     (procedure_division
       (ERROR
-        (CONNECT))
-      (period))))
+        (CONNECT)))))
 
 ====================================
 idms update invalid bare disconnect
@@ -105,8 +101,7 @@ idms update invalid bare disconnect
       (program_name))
     (procedure_division
       (ERROR
-        (DISCONNECT))
-      (period))))
+        (DISCONNECT)))))
 
 ====================================
 idms update invalid connect from
@@ -126,8 +121,7 @@ idms update invalid connect from
         (CONNECT)
         (WORD)
         (FROM)
-        (WORD))
-      (period))))
+        (WORD)))))
 
 ====================================
 idms update invalid disconnect to
@@ -147,8 +141,7 @@ idms update invalid disconnect to
         (DISCONNECT)
         (WORD)
         (TO)
-        (WORD))
-      (period))))
+        (WORD)))))
 
 ====================================
 idms update invalid store to
@@ -168,8 +161,27 @@ idms update invalid store to
         (STORE)
         (WORD)
         (TO)
-        (WORD))
-      (period))))
+        (WORD)))))
+
+====================================
+idms update invalid store from
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       STORE CUSTOMER-REC FROM CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (STORE)
+        (WORD)
+        (FROM)
+        (WORD)))))
 
 ====================================
 idms update invalid modify from
@@ -189,8 +201,27 @@ idms update invalid modify from
         (MODIFY)
         (WORD)
         (FROM)
-        (WORD))
-      (period))))
+        (WORD)))))
+
+====================================
+idms update invalid modify to
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       MODIFY CUSTOMER-REC TO CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (MODIFY)
+        (WORD)
+        (TO)
+        (WORD)))))
 
 ====================================
 idms update invalid get to
@@ -210,8 +241,27 @@ idms update invalid get to
         (GET)
         (WORD)
         (TO)
-        (WORD))
-      (period))))
+        (WORD)))))
+
+====================================
+idms update invalid get from
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       GET CUSTOMER-REC FROM CUST-ORDER-SET.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (GET)
+        (WORD)
+        (FROM)
+        (WORD)))))
 
 ====================================
 idms update invalid cross-verb option
@@ -231,8 +281,87 @@ idms update invalid cross-verb option
         (STORE)
         (WORD)
         (ALL)
-        (MEMBERS))
-      (period))))
+        (MEMBERS)))))
+
+====================================
+idms update invalid modify member option
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       MODIFY CUSTOMER-REC PERMANENT MEMBERS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (MODIFY)
+        (WORD)
+        (PERMANENT)
+        (MEMBERS)))))
+
+====================================
+idms update invalid connect member option
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       CONNECT CUSTOMER-REC SELECTIVE MEMBERS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (CONNECT)
+        (WORD)
+        (SELECTIVE)
+        (MEMBERS)))))
+
+====================================
+idms update invalid disconnect member option
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       DISCONNECT CUSTOMER-REC ALL MEMBERS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (DISCONNECT)
+        (WORD)
+        (ALL)
+        (MEMBERS)))))
+
+====================================
+idms update invalid get member option
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       GET CUSTOMER-REC PERMANENT MEMBERS.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (ERROR
+        (GET)
+        (WORD)
+        (PERMANENT)
+        (MEMBERS)))))
 
 ====================================
 idms update modify

@@ -1397,6 +1397,7 @@ module.exports = grammar({
       $.goback_statement,
       $.goto_statement,
       $.idms_accept_statement,
+      alias($._idms_invalid_update_statement, $.ERROR),
       $.idms_navigation_statement,
       $.idms_session_statement,
       $.idms_update_statement,
@@ -2693,33 +2694,66 @@ module.exports = grammar({
       $._idms_navigation_body
     ),
 
-    idms_update_statement: $ => seq(
-      field('verb', choice(
-        $.STORE,
-        $.MODIFY,
-        $.ERASE,
-        $.CONNECT,
-        $.DISCONNECT,
-        $.GET
-      )),
-      optional($._idms_update_body)
+    idms_update_statement: $ => choice(
+      seq(
+        field('verb', choice($.STORE, $.MODIFY)),
+        $.idms_record_name
+      ),
+      seq(
+        field('verb', $.ERASE),
+        $.idms_record_name,
+        // ERASE <record> [ALL|PERMANENT|SELECTIVE] [MEMBERS]. Modelled on
+        // measured volume: the D-09 tail census found this shape in 14 of
+        // 119 idms_unparsed_tail records (12%), the second and only other
+        // concentration after BIND RUN-UNIT DBNAME.
+        optional(seq(
+          choice($.ALL, $.PERMANENT, $.SELECTIVE),
+          optional($.MEMBERS)
+        )),
+        optional($.idms_unparsed_tail)
+      ),
+      seq(
+        field('verb', $.CONNECT),
+        $.idms_record_name,
+        $.TO,
+        $.idms_set_name
+      ),
+      seq(
+        field('verb', $.DISCONNECT),
+        $.idms_record_name,
+        $.FROM,
+        $.idms_set_name
+      ),
+      seq(
+        field('verb', $.GET),
+        optional($.idms_record_name)
+      )
     ),
 
-    _idms_update_body: $ => seq(
-      $.idms_record_name,
-      optional(choice(
-        seq($.TO, $.idms_set_name),
-        seq($.FROM, $.idms_set_name)
-      )),
-      // ERASE <record> [ALL|PERMANENT|SELECTIVE] [MEMBERS]. Modelled on
-      // measured volume: the D-09 tail census found this shape in 14 of 119
-      // idms_unparsed_tail records (12%), the second and only other
-      // concentration after BIND RUN-UNIT DBNAME.
-      optional(seq(
+    // Keep known invalid cross-verb forms inside the procedure division so
+    // recovery cannot strand a valid-looking partial update node. The alias
+    // deliberately exposes them as ERROR rather than a graph-bearing type.
+    _idms_invalid_update_statement: $ => choice(
+      seq(
+        choice($.STORE, $.MODIFY, $.ERASE, $.CONNECT, $.DISCONNECT),
+        '.'
+      ),
+      seq(
+        choice($.STORE, $.MODIFY, $.GET),
+        $.WORD,
+        choice($.TO, $.FROM),
+        $.WORD,
+        '.'
+      ),
+      seq($.CONNECT, $.WORD, $.FROM, $.WORD, '.'),
+      seq($.DISCONNECT, $.WORD, $.TO, $.WORD, '.'),
+      seq(
+        choice($.STORE, $.MODIFY, $.CONNECT, $.DISCONNECT, $.GET),
+        optional($.WORD),
         choice($.ALL, $.PERMANENT, $.SELECTIVE),
-        optional($.MEMBERS)
-      )),
-      optional($.idms_unparsed_tail)
+        optional($.MEMBERS),
+        '.'
+      )
     ),
 
     idms_session_statement: $ => $._idms_session_body,
