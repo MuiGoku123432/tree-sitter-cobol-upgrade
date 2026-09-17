@@ -2772,7 +2772,7 @@ module.exports = grammar({
       ),
       seq(
         field('verb', $.READY),
-        optional($.idms_record_name),
+        optional($.idms_area_name),
         optional(seq(
           $.USAGE_MODE,
           optional($.IS),
@@ -2817,9 +2817,9 @@ module.exports = grammar({
           $.WORD,
           optional(seq($.PAGE_INFO, $.WORD))
         ),
-        // Format: CALC
+        // Format: CALC, ANY, or DUPLICATE
         seq(
-          optional(choice($.CALC, $.ANY)),
+          optional(choice($.CALC, $.ANY, $.DUPLICATE)),
           $.idms_record_name
         ),
         // Format: OWNER
@@ -2828,19 +2828,20 @@ module.exports = grammar({
           $.WITHIN,
           $.idms_set_name
         ),
-        // Format: WITHIN set/area
+        // Format: WITHIN set/area. The syntax is identical for both roles,
+        // so the scope remains neutral rather than being guessed from its name.
         seq(
           optional(choice($.NEXT, $.PRIOR, $.FIRST, $.LAST, $.integer)),
           optional($.idms_record_name),
           $.WITHIN,
-          $.idms_set_name
+          $.idms_scope_name
         ),
         // Format: CURRENT
         seq(
           $.CURRENT,
           optional(choice(
             $.idms_record_name,
-            seq($.WITHIN, $.idms_set_name)
+            seq($.WITHIN, $.idms_scope_name)
           ))
         ),
       ),
@@ -2857,7 +2858,11 @@ module.exports = grammar({
     // generator error, so no `conflicts:` entry was needed.
     idms_record_name: $ => prec(1, $.WORD),
 
+    idms_area_name: $ => prec(1, $.WORD),
+
     idms_set_name: $ => prec(1, $.WORD),
+
+    idms_scope_name: $ => prec(1, $.WORD),
 
     // D-03: an operand tail the four formats above don't model is absorbed
     // into this named node rather than left to ERROR or silently dropped.
@@ -3608,6 +3613,7 @@ module.exports = grammar({
     _DIVIDE: $ => /[dD][iI][vV][iI][dD][eE]/,
     _DIVISION: $ => /[dD][iI][vV][iI][sS][iI][oO][nN]/,
     _DOWN: $ => /[dD][oO][wW][nN]/,
+    _DUPLICATE: $ => /[dD][uU][pP][lL][iI][cC][aA][tT][eE]/,
     _DUPLICATES: $ => /[dD][uU][pP][lL][iI][cC][aA][tT][eE][sS]/,
     _DYNAMIC: $ => /[dD][yY][nN][aA][mM][iI][cC]/,
     _EBCDIC: $ => /[eE][bB][cC][dD][iI][cC]/,
@@ -4107,6 +4113,7 @@ module.exports = grammar({
     //DIVIDE: $ => $._DIVIDE,
     //DIVISION: $ => $._DIVISION,
     DOWN: $ => $._DOWN,
+    DUPLICATE: $ => $._DUPLICATE,
     DUPLICATES: $ => $._DUPLICATES,
     DYNAMIC: $ => $._DYNAMIC,
     EBCDIC: $ => $._EBCDIC,

@@ -18,7 +18,7 @@ idms navigation obtain next within set
         (idms_record_name
           (WORD))
         (WITHIN)
-        (idms_set_name
+        (idms_scope_name
           (WORD)))
       (period))))
 
@@ -42,7 +42,7 @@ idms navigation lowercase
         (idms_record_name
           (WORD))
         (WITHIN)
-        (idms_set_name
+        (idms_scope_name
           (WORD)))
       (period))))
 
@@ -130,7 +130,7 @@ idms navigation current
         verb: (FIND)
         (CURRENT)
         (WITHIN)
-        (idms_set_name
+        (idms_scope_name
           (WORD)))
       (period))))
 
@@ -203,7 +203,7 @@ idms navigation two statements one sentence
         (idms_record_name
           (WORD))
         (WITHIN)
-        (idms_set_name
+        (idms_scope_name
           (WORD)))
       (idms_navigation_statement
         verb: (OBTAIN)
@@ -211,6 +211,169 @@ idms navigation two statements one sentence
         (idms_record_name
           (WORD))
         (WITHIN)
-        (idms_set_name
+        (idms_scope_name
           (WORD)))
+      (period))))
+
+====================================
+idms navigation any record selector
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN ANY ORDER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (ANY)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation duplicate record selector
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND DUPLICATE ORDER-REC.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (DUPLICATE)
+        (idms_record_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation first within neutral scope
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN FIRST ORDER-REC WITHIN ORDER-SCOPE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (FIRST)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_scope_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation last within neutral scope
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND LAST ORDER-REC WITHIN ORDER-SCOPE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (LAST)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_scope_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation prior within neutral scope
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN PRIOR ORDER-REC WITHIN ORDER-SCOPE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (PRIOR)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_scope_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation numeric within neutral scope
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       FIND 3 ORDER-REC WITHIN ORDER-SCOPE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (FIND)
+        (integer)
+        (idms_record_name
+          (WORD))
+        (WITHIN)
+        (idms_scope_name
+          (WORD)))
+      (period))))
+
+====================================
+idms navigation db-key page-info
+====================================
+       identification division.
+       program-id. a.
+       procedure division.
+       OBTAIN ORDER-REC DB-KEY IS WS-KEY PAGE-INFO WS-PAGE.
+---
+
+(start
+  (program_definition
+    (identification_division
+      (program_name))
+    (procedure_division
+      (idms_navigation_statement
+        verb: (OBTAIN)
+        (idms_record_name
+          (WORD))
+        (DB_KEY)
+        (IS)
+        (WORD)
+        (PAGE_INFO)
+        (WORD))
       (period))))

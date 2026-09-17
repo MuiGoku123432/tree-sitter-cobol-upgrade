@@ -22,6 +22,7 @@
   verb: (_) @verb)
 
 (idms_session_statement
+  verb: (BIND)
   (idms_record_name) @record)
 
 (idms_accept_statement

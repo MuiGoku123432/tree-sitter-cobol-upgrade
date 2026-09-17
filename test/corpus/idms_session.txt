@@ -53,7 +53,7 @@ idms session ready usage mode
     (procedure_division
       (idms_session_statement
         verb: (READY)
-        (idms_record_name
+        (idms_area_name
           (WORD))
         (USAGE_MODE)
         (IS)

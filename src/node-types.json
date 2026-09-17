@@ -335,6 +335,11 @@
     "fields": {}
   },
   {
+    "type": "DUPLICATE",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "DUPLICATES",
     "named": true,
     "fields": {}
@@ -6283,6 +6288,21 @@
     }
   },
   {
+    "type": "idms_area_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "idms_navigation_statement",
     "named": true,
     "fields": {
@@ -6319,6 +6339,10 @@
         },
         {
           "type": "DB_KEY",
+          "named": true
+        },
+        {
+          "type": "DUPLICATE",
           "named": true
         },
         {
@@ -6370,6 +6394,10 @@
           "named": true
         },
         {
+          "type": "idms_scope_name",
+          "named": true
+        },
+        {
           "type": "idms_set_name",
           "named": true
         },
@@ -6386,6 +6414,21 @@
   },
   {
     "type": "idms_record_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "WORD",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "idms_scope_name",
     "named": true,
     "fields": {},
     "children": {
@@ -6480,6 +6523,10 @@
         },
         {
           "type": "WORD",
+          "named": true
+        },
+        {
+          "type": "idms_area_name",
           "named": true
         },
         {

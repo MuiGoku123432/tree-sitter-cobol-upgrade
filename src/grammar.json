@@ -14470,7 +14470,7 @@
                 "members": [
                   {
                     "type": "SYMBOL",
-                    "name": "idms_record_name"
+                    "name": "idms_area_name"
                   },
                   {
                     "type": "BLANK"
@@ -14783,6 +14783,10 @@
                         {
                           "type": "SYMBOL",
                           "name": "ANY"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "DUPLICATE"
                         }
                       ]
                     },
@@ -14868,7 +14872,7 @@
                 },
                 {
                   "type": "SYMBOL",
-                  "name": "idms_set_name"
+                  "name": "idms_scope_name"
                 }
               ]
             },
@@ -14898,7 +14902,7 @@
                             },
                             {
                               "type": "SYMBOL",
-                              "name": "idms_set_name"
+                              "name": "idms_scope_name"
                             }
                           ]
                         }
@@ -14935,7 +14939,23 @@
         "name": "WORD"
       }
     },
+    "idms_area_name": {
+      "type": "PREC",
+      "value": 1,
+      "content": {
+        "type": "SYMBOL",
+        "name": "WORD"
+      }
+    },
     "idms_set_name": {
+      "type": "PREC",
+      "value": 1,
+      "content": {
+        "type": "SYMBOL",
+        "name": "WORD"
+      }
+    },
+    "idms_scope_name": {
       "type": "PREC",
       "value": 1,
       "content": {
@@ -19298,6 +19318,10 @@
       "type": "PATTERN",
       "value": "[dD][oO][wW][nN]"
     },
+    "_DUPLICATE": {
+      "type": "PATTERN",
+      "value": "[dD][uU][pP][lL][iI][cC][aA][tT][eE]"
+    },
     "_DUPLICATES": {
       "type": "PATTERN",
       "value": "[dD][uU][pP][lL][iI][cC][aA][tT][eE][sS]"
@@ -21228,6 +21252,10 @@
     "DOWN": {
       "type": "SYMBOL",
       "name": "_DOWN"
+    },
+    "DUPLICATE": {
+      "type": "SYMBOL",
+      "name": "_DUPLICATE"
     },
     "DUPLICATES": {
       "type": "SYMBOL",
