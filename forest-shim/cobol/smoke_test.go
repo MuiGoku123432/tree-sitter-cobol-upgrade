@@ -3,7 +3,9 @@
 package cobol
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
 	"testing"
 )
 
@@ -50,6 +52,42 @@ func TestShimEmbedsThisForksGrammar(t *testing.T) {
 
 	if len(info) <= 100000 {
 		t.Fatalf("len(Info()) = %d, want > 100000 (forest v1.9.1's placeholder is 327 bytes; this fork's grammar.json is 428,580 bytes)", len(info))
+	}
+}
+
+// TestShimEmbedsIDMSQuery pins the published IDMS query in both supported
+// GetQuery forms and checks the query still names every public statement class
+// plus its graph-bearing capture roles.
+func TestShimEmbedsIDMSQuery(t *testing.T) {
+	idms := GetQuery("idms")
+	idmsScm := GetQuery("idms.scm")
+	if len(idms) == 0 {
+		t.Fatal("GetQuery(\"idms\") returned empty, want the published IDMS query")
+	}
+	if !bytes.Equal(idmsScm, idms) {
+		t.Fatal("GetQuery(\"idms.scm\") differs from GetQuery(\"idms\")")
+	}
+	if sourcePath := os.Getenv("IDMS_SOURCE_QUERY"); sourcePath != "" {
+		source, err := os.ReadFile(sourcePath)
+		if err != nil {
+			t.Fatalf("read source IDMS query: %v", err)
+		}
+		if !bytes.Equal(idms, source) {
+			t.Fatal("embedded IDMS query differs from IDMS_SOURCE_QUERY")
+		}
+	}
+	for _, contract := range [][]byte{
+		[]byte("idms_navigation_statement"),
+		[]byte("idms_update_statement"),
+		[]byte("idms_session_statement"),
+		[]byte("idms_accept_statement"),
+		[]byte("@verb"),
+		[]byte("@record"),
+		[]byte("@set"),
+	} {
+		if !bytes.Contains(idms, contract) {
+			t.Fatalf("embedded IDMS query is missing contract fragment %q", contract)
+		}
 	}
 }
 

@@ -9,7 +9,7 @@
 #      carry, so the flattened layout actually compiles
 #   5. diffs the shim's Go surface against the forest module-cache copy
 #      it impersonates, to catch drift from forest's drop-in contract
-#   6. smoke-builds the shim as the final, exit-code-gating self-check
+#   6. smoke-tests the staged shim as the final pre-install gate
 #
 # Deliberately not an npm script and not a Makefile (D-07) — grouped here,
 # beside the shim it maintains, so a fork-local tool never has to edit an
@@ -18,10 +18,8 @@
 #
 # House style, matching run_nist_cobol85.sh and test/check_tests.sh: no
 # `set -e`/`set -u` anywhere in this repo's scripts — every command that can
-# fail is followed by an explicit `$?` check, integer counters accumulate a
-# result, and the aggregate exit code reflects that counter, not the last
-# command run. Every report line is dual-written to stdout and to
-# $REFRESH_LOG via `tee -a`.
+# fail is followed by an explicit `$?` check. Every report line is dual-written
+# to stdout and to $REFRESH_LOG via `tee -a`.
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
@@ -33,8 +31,17 @@ REFRESH_LOG=${REFRESH_LOG:-$TOP_DIR/forest-shim/refresh.log}
 REFRESH_SKIP_INSTALL=${REFRESH_SKIP_INSTALL:-}
 REFRESH_SKIP_GENERATE=${REFRESH_SKIP_GENERATE:-}
 REFRESH_ALLOW_DRIFT=${REFRESH_ALLOW_DRIFT:-}
+REFRESH_FORCE_COPY_FAILURE=${REFRESH_FORCE_COPY_FAILURE:-}
 
 FAIL_COUNTER=0
+STAGE_ROOT=""
+
+cleanup() {
+    if [ -n "$STAGE_ROOT" ] && [ -d "$STAGE_ROOT" ]; then
+        rm -rf "$STAGE_ROOT"
+    fi
+}
+trap cleanup EXIT INT TERM
 
 : > "$REFRESH_LOG"
 
@@ -96,7 +103,12 @@ else
     GEN_STATUS=$?
     if [ "$GEN_STATUS" != "0" ]; then
         report "STEP 2 (generate): FAIL - tree-sitter generate exited $GEN_STATUS"
-        FAIL_COUNTER=$((FAIL_COUNTER+1))
+        report "STEP 3 (copy-and-flatten): SKIPPED - generation failed"
+        report "STEP 4 (include rewrite): SKIPPED - generation failed"
+        report "STEP 5 (drift check): SKIPPED - generation failed"
+        report "STEP 6 (smoke test): SKIPPED - generation failed"
+        report "SUMMARY: step1=OK step2=FAIL step3=SKIPPED step4=SKIPPED step5=SKIPPED step6=SKIPPED (aborted after Step 2 - live shim unchanged)"
+        exit 1
     else
         report "STEP 2 (generate): OK - tree-sitter generate regenerated src/ from grammar.js"
         SRC_DIFF=$(cd "$TOP_DIR" && git status --porcelain src/)
@@ -108,30 +120,60 @@ else
     fi
 fi
 
-# --- Step 3: copy and flatten (D-04) ---
+# --- Step 3: stage a complete copy-and-flatten set (D-04) ---
+# Never mutate the live shim while assembling generated artifacts. A failed
+# copy leaves the previously coherent live set byte-identical.
+SHIM_PARENT=$(dirname "$SHIM_DIR")
+SHIM_NAME=$(basename "$SHIM_DIR")
+STAGE_ROOT=$(mktemp -d "$SHIM_PARENT/.${SHIM_NAME}.refresh.XXXXXX")
+if [ $? != "0" ] || [ -z "$STAGE_ROOT" ]; then
+    report "STEP 3 (copy-and-flatten): FAIL - could not create sibling staging directory"
+    report "STEP 4 (include rewrite): SKIPPED - staging failed"
+    report "STEP 5 (drift check): SKIPPED - staging failed"
+    report "STEP 6 (smoke test): SKIPPED - staging failed"
+    report "SUMMARY: step1=OK step2=OK step3=FAIL step4=SKIPPED step5=SKIPPED step6=SKIPPED (aborted after Step 3 - live shim unchanged)"
+    exit 1
+fi
+STAGE_DIR="$STAGE_ROOT/$SHIM_NAME"
+cp -R "$SHIM_DIR" "$STAGE_DIR"
+if [ $? != "0" ]; then
+    report "STEP 3 (copy-and-flatten): FAIL - could not clone the live shim into staging"
+    report "STEP 4 (include rewrite): SKIPPED - staging failed"
+    report "STEP 5 (drift check): SKIPPED - staging failed"
+    report "STEP 6 (smoke test): SKIPPED - staging failed"
+    report "SUMMARY: step1=OK step2=OK step3=FAIL step4=SKIPPED step5=SKIPPED step6=SKIPPED (aborted after Step 3 - live shim unchanged)"
+    exit 1
+fi
+chmod -R u+w "$STAGE_DIR"
+
 COPY_OK=1
-cp "$TOP_DIR/src/parser.c" "$SHIM_DIR/parser.c"
-if [ $? != "0" ]; then COPY_OK=0; fi
-cp "$TOP_DIR/src/scanner.c" "$SHIM_DIR/scanner.c"
-if [ $? != "0" ]; then COPY_OK=0; fi
-cp "$TOP_DIR/src/grammar.json" "$SHIM_DIR/grammar.json"
-if [ $? != "0" ]; then COPY_OK=0; fi
-cp "$TOP_DIR/src/tree_sitter/parser.h" "$SHIM_DIR/parser.h"
-if [ $? != "0" ]; then COPY_OK=0; fi
+SCM_COPIED=""
+for COPY_SPEC in \
+    "$TOP_DIR/src/parser.c:parser.c" \
+    "$TOP_DIR/src/scanner.c:scanner.c" \
+    "$TOP_DIR/src/grammar.json:grammar.json" \
+    "$TOP_DIR/src/tree_sitter/parser.h:parser.h"
+do
+    COPY_SOURCE=${COPY_SPEC%:*}
+    COPY_NAME=${COPY_SPEC##*:}
+    cp "$COPY_SOURCE" "$STAGE_DIR/$COPY_NAME"
+    if [ $? != "0" ]; then COPY_OK=0; fi
+done
 
 # queries/*.scm must land INSIDE the shim: forest-shim/cobol/plugin.go and
 # binding.go both declare `//go:embed grammar.json *.scm`, so a query left
 # behind in queries/ is invisible to gortex no matter how correct it is.
-#
-# The destination is removed first. Files carried in by forest's own module-cache
-# drop-in arrive read-only (0444, as everything under $GOPATH/pkg/mod does), and
-# sample.scm is one of them - a plain cp over it fails with "Permission denied"
-# and takes the whole step down with it.
-SCM_COPIED=""
+# Remove staged query files first so a source deletion cannot leave a stale,
+# embedded query in the installed set. Keep forest's empty structural marker.
+for STAGED_SCM in "$STAGE_DIR"/*.scm; do
+    if [ -f "$STAGED_SCM" ] && [ "$(basename "$STAGED_SCM")" != "_keep.scm" ]; then
+        rm -f "$STAGED_SCM"
+        if [ $? != "0" ]; then COPY_OK=0; fi
+    fi
+done
 for SCM_FILE in "$TOP_DIR"/queries/*.scm; do
     if [ -f "$SCM_FILE" ]; then
-        rm -f "$SHIM_DIR/$(basename "$SCM_FILE")"
-        cp "$SCM_FILE" "$SHIM_DIR/$(basename "$SCM_FILE")"
+        cp "$SCM_FILE" "$STAGE_DIR/$(basename "$SCM_FILE")"
         if [ $? != "0" ]; then
             COPY_OK=0
         else
@@ -140,34 +182,57 @@ for SCM_FILE in "$TOP_DIR"/queries/*.scm; do
     fi
 done
 
-if [ "$COPY_OK" = "1" ]; then
-    report "STEP 3 (copy-and-flatten): OK - parser.c, scanner.c, grammar.json, parser.h and queries/*.scm ($(echo $SCM_COPIED)) copied into $SHIM_DIR"
-else
-    report "STEP 3 (copy-and-flatten): FAIL - one or more copies from src/ into $SHIM_DIR failed"
-    FAIL_COUNTER=$((FAIL_COUNTER+1))
+if [ -n "$REFRESH_FORCE_COPY_FAILURE" ]; then
+    report "STEP 3 (copy-and-flatten): injected copy/staging failure"
+    COPY_OK=0
 fi
 
-# --- Step 4: rewrite the include directives ---
-# The copied parser.c and scanner.c still ask for the header at its
-# pre-flatten location, in two different syntaxes - a single sed pattern
-# catches only one of them.
-sed -i '' 's#include "tree_sitter/parser.h"#include "parser.h"#' "$SHIM_DIR/parser.c"
+if [ "$COPY_OK" != "1" ]; then
+    report "STEP 3 (copy-and-flatten): FAIL - one or more copies into staging failed"
+    report "STEP 4 (include rewrite): SKIPPED - staging failed"
+    report "STEP 5 (drift check): SKIPPED - staging failed"
+    report "STEP 6 (smoke test): SKIPPED - staging failed"
+    report "SUMMARY: step1=OK step2=OK step3=FAIL step4=SKIPPED step5=SKIPPED step6=SKIPPED (aborted after Step 3 - live shim unchanged)"
+    exit 1
+fi
+report "STEP 3 (copy-and-flatten): OK - parser.c, scanner.c, grammar.json, parser.h and queries/*.scm ($(echo $SCM_COPIED)) staged for $SHIM_DIR"
+
+# --- Step 4: portably rewrite and validate the staged include directives ---
+# Write transformed temporary files and rename them; BSD and GNU sed differ on
+# in-place syntax, so no sed -i form is portable across supported CI hosts.
+rewrite_include() {
+    REWRITE_FILE="$1"
+    REWRITE_PATTERN="$2"
+    REWRITE_TEMP="$REWRITE_FILE.refresh-tmp"
+    sed "$REWRITE_PATTERN" "$REWRITE_FILE" > "$REWRITE_TEMP"
+    if [ $? != "0" ]; then
+        rm -f "$REWRITE_TEMP"
+        return 1
+    fi
+    mv "$REWRITE_TEMP" "$REWRITE_FILE"
+}
+
+rewrite_include "$STAGE_DIR/parser.c" 's#include "tree_sitter/parser.h"#include "parser.h"#'
 SED1_STATUS=$?
-sed -i '' 's#include <tree_sitter/parser.h>#include "parser.h"#' "$SHIM_DIR/scanner.c"
+rewrite_include "$STAGE_DIR/scanner.c" 's#include <tree_sitter/parser.h>#include "parser.h"#'
 SED2_STATUS=$?
 
 if [ "$SED1_STATUS" != "0" ] || [ "$SED2_STATUS" != "0" ]; then
-    report "STEP 4 (include rewrite): FAIL - sed exited nonzero (parser.c=$SED1_STATUS scanner.c=$SED2_STATUS)"
-    FAIL_COUNTER=$((FAIL_COUNTER+1))
-else
-    grep -q 'tree_sitter/parser.h' "$SHIM_DIR/parser.c" "$SHIM_DIR/scanner.c"
-    if [ $? = "0" ]; then
-        report "STEP 4 (include rewrite): FAIL - the subdirectory include path is still present after rewrite"
-        FAIL_COUNTER=$((FAIL_COUNTER+1))
-    else
-        report "STEP 4 (include rewrite): OK - parser.c (quoted form) and scanner.c (angle-bracket form) both rewritten to the flattened header"
-    fi
+    report "STEP 4 (include rewrite): FAIL - portable rewrite exited nonzero (parser.c=$SED1_STATUS scanner.c=$SED2_STATUS)"
+    report "STEP 5 (drift check): SKIPPED - include rewrite failed"
+    report "STEP 6 (smoke test): SKIPPED - include rewrite failed"
+    report "SUMMARY: step1=OK step2=OK step3=OK step4=FAIL step5=SKIPPED step6=SKIPPED (live shim unchanged)"
+    exit 1
 fi
+grep -q 'tree_sitter/parser.h' "$STAGE_DIR/parser.c" "$STAGE_DIR/scanner.c"
+if [ $? = "0" ]; then
+    report "STEP 4 (include rewrite): FAIL - the subdirectory include path remains in staging"
+    report "STEP 5 (drift check): SKIPPED - include rewrite failed"
+    report "STEP 6 (smoke test): SKIPPED - include rewrite failed"
+    report "SUMMARY: step1=OK step2=OK step3=OK step4=FAIL step5=SKIPPED step6=SKIPPED (live shim unchanged)"
+    exit 1
+fi
+report "STEP 4 (include rewrite): OK - staged parser.c and scanner.c use the flattened header"
 
 # --- Step 5: drift check (D-03) ---
 if [ ! -d "$FOREST_CACHE" ]; then
@@ -176,7 +241,7 @@ if [ ! -d "$FOREST_CACHE" ]; then
 else
     DRIFT_FOUND=0
     for GO_SURFACE_FILE in binding.go plugin.go go.mod; do
-        diff -q "$SHIM_DIR/$GO_SURFACE_FILE" "$FOREST_CACHE/$GO_SURFACE_FILE" > /dev/null 2>&1
+        diff -q "$STAGE_DIR/$GO_SURFACE_FILE" "$FOREST_CACHE/$GO_SURFACE_FILE" > /dev/null 2>&1
         if [ $? != "0" ]; then
             DRIFT_FOUND=1
         fi
@@ -193,23 +258,49 @@ else
     fi
 fi
 
-# --- Step 6: smoke build, LAST ---
-# This must be the final step and the exit code must be gated on it, so a
-# run that failed anywhere earlier can never report success with a
-# half-updated shim.
-( cd "$SHIM_DIR" && go build ./... )
-BUILD_STATUS=$?
-if [ "$BUILD_STATUS" != "0" ]; then
-    report "STEP 6 (smoke build): FAIL - go build ./... exited $BUILD_STATUS in $SHIM_DIR"
-    FAIL_COUNTER=$((FAIL_COUNTER+1))
-else
-    report "STEP 6 (smoke build): OK - go build ./... succeeded in $SHIM_DIR"
+if [ "$FAIL_COUNTER" != "0" ]; then
+    report "STEP 6 (smoke test): SKIPPED - drift check failed"
+    report "SUMMARY: step1=OK step2=OK step3=OK step4=OK step5=FAIL step6=SKIPPED (live shim unchanged)"
+    exit 1
 fi
 
-if [ "$FAIL_COUNTER" != "0" ]; then
-    report "SUMMARY: $FAIL_COUNTER step(s) failed - refresh did not complete cleanly"
+# --- Step 6: smoke test the complete staged package, LAST ---
+# No generated artifact reaches the live shim until the staged Go tests pass.
+( cd "$STAGE_DIR" && IDMS_SOURCE_QUERY="$TOP_DIR/queries/idms.scm" go test ./... )
+BUILD_STATUS=$?
+if [ "$BUILD_STATUS" != "0" ]; then
+    report "STEP 6 (smoke test): FAIL - go test ./... exited $BUILD_STATUS in staging"
+    report "SUMMARY: step1=OK step2=OK step3=OK step4=OK step5=OK step6=FAIL (live shim unchanged)"
     exit 1
-else
-    report "SUMMARY: all 6 steps completed - dependencies OK, generate OK, copy-and-flatten OK, include rewrite OK, drift check OK, smoke build OK"
-    exit 0
 fi
+report "STEP 6 (smoke test): OK - go test ./... succeeded against the staged coherent artifact set"
+
+BACKUP_DIR="$STAGE_ROOT/${SHIM_NAME}.previous"
+mv "$SHIM_DIR" "$BACKUP_DIR"
+if [ $? != "0" ]; then
+    report "INSTALL: FAIL - could not move the live shim aside; staged set not installed"
+    exit 1
+fi
+mv "$STAGE_DIR" "$SHIM_DIR"
+if [ $? != "0" ]; then
+    if [ -e "$SHIM_DIR" ] || [ -L "$SHIM_DIR" ]; then
+        rm -rf "$SHIM_DIR"
+    fi
+    mv "$BACKUP_DIR" "$SHIM_DIR"
+    RESTORE_STATUS=$?
+    if [ "$RESTORE_STATUS" != "0" ]; then
+        report "INSTALL: FAIL - could not install staged shim or restore the previous live shim"
+    else
+        report "INSTALL: FAIL - could not install staged shim; previous live shim restored"
+    fi
+    exit 1
+fi
+rm -rf "$BACKUP_DIR"
+if [ $? != "0" ]; then
+    report "INSTALL: FAIL - coherent shim installed but previous sibling cleanup failed"
+    exit 1
+fi
+STAGE_ROOT=""
+report "INSTALL: OK - complete staged parser, grammar, header, scanner, and query set atomically installed"
+report "SUMMARY: all 6 steps completed - dependencies OK, generate OK, staged copy OK, portable include rewrite OK, drift check OK, staged tests OK"
+exit 0
