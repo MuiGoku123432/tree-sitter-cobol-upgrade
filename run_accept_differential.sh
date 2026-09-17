@@ -133,6 +133,13 @@ report() {
     printf '%s\n' "$1"
 }
 
+validate_node_type_regex() {
+    VALIDATE_REGEX="$1"
+    printf '' | grep -E "$VALIDATE_REGEX" >/dev/null 2>&1
+    VALIDATE_STATUS=$?
+    [ "$VALIDATE_STATUS" -eq 0 ] || [ "$VALIDATE_STATUS" -eq 1 ]
+}
+
 cleanup_parser_libdirs() {
     for CACHE_DIR in "${BASELINE_LIBDIR:-}" "${CURRENT_LIBDIR:-}"; do
         if [ -n "$CACHE_DIR" ] && [ -d "$CACHE_DIR" ]; then
@@ -206,6 +213,10 @@ cmd_snapshot() {
     fi
     if ! command -v "$WALL_TIMEOUT_BIN" >/dev/null 2>&1; then
         report "snapshot: FAIL - wall-clock timeout command not found: $WALL_TIMEOUT_BIN"
+        return 1
+    fi
+    if ! validate_node_type_regex "$SNAP_NODE_TYPE_REGEX"; then
+        report "snapshot: FAIL - invalid node type regex (T-02-R04)"
         return 1
     fi
     path_is_under_repo "$SNAP_OUT_FILE" file
@@ -423,6 +434,11 @@ cmd_snapshot() {
                 FILES_FAILED=$((FILES_FAILED + 1))
                 continue
             fi
+            if [ "$PARSE_STATUS" -gt 1 ]; then
+                report "snapshot: FAIL - parser extraction pipeline failed (T-02-R04, status=$PARSE_STATUS)"
+                rm -f "$SNAP_ACCUM" "$SNAP_FILELIST" "$SNAP_OUT_FILE"
+                return 1
+            fi
             if [ -z "$PARSE_OUT" ]; then
                 FILES_FAILED=$((FILES_FAILED + 1))
                 continue
@@ -431,19 +447,27 @@ cmd_snapshot() {
                 FILES_WITH_PARSE_ERRORS=$((FILES_WITH_PARSE_ERRORS + 1))
             fi
 
-            FILE_RECORDS="$(printf '%s\n' "$PARSE_OUT" | grep -E "$NODE_LINE_RE" | sed -E "$EXTRACT_SED")"
-            if [ -z "$FILE_RECORDS" ]; then
-                FILES_ZERO_MATCH=$((FILES_ZERO_MATCH + 1))
-                continue
-            fi
-
             FILE_RECORDS_TMP="$(mktemp)"
             if [ $? -ne 0 ] || [ -z "$FILE_RECORDS_TMP" ]; then
                 report "snapshot: FAIL - could not create a per-file scratch inventory"
                 rm -f "$SNAP_ACCUM" "$SNAP_FILELIST"
                 return 1
             fi
-            printf '%s\n' "$FILE_RECORDS" > "$FILE_RECORDS_TMP"
+            printf '%s\n' "$PARSE_OUT" | grep -E "$NODE_LINE_RE" | sed -E "$EXTRACT_SED" > "$FILE_RECORDS_TMP"
+            PIPELINE_STATUS=("${PIPESTATUS[@]}")
+            GREP_STATUS="${PIPELINE_STATUS[1]}"
+            SED_STATUS="${PIPELINE_STATUS[2]}"
+            if [ "$GREP_STATUS" -gt 1 ] || [ "$SED_STATUS" -ne 0 ]; then
+                report "snapshot: FAIL - parser extraction pipeline failed (T-02-R04)"
+                rm -f "$SNAP_ACCUM" "$SNAP_FILELIST" "$FILE_RECORDS_TMP" "$SNAP_OUT_FILE"
+                return 1
+            fi
+            FILE_RECORDS="$(<"$FILE_RECORDS_TMP")"
+            if [ -z "$FILE_RECORDS" ]; then
+                rm -f "$FILE_RECORDS_TMP"
+                FILES_ZERO_MATCH=$((FILES_ZERO_MATCH + 1))
+                continue
+            fi
             FILE_OUT="$(awk -F'\t' -v relpath="$REL_PATH" '
                 NR==FNR { if ($1 == "ERROR") err[$2] = 1; next }
                 $1 != "ERROR" {
@@ -505,40 +529,66 @@ cmd_compare() {
         return 1
     fi
 
-    # Distinguish BEFORE vs AFTER by FILENAME, not the classic NR==FNR
-    # trick: NR==FNR silently misidentifies the AFTER file's first line as
-    # BEFORE input whenever BEFORE is empty (0 lines), since NR and FNR both
-    # restart in lockstep at 1 for the very next file read. Case 5/6 in the
-    # self-test (an empty before-inventory) is exactly the shape that trips
-    # this.
-    awk -F'\t' -v beforefile="$CMP_BEFORE" '
-        FILENAME == beforefile {
-            key = $1 SUBSEP $2
-            btype[key] = $3
-            bqual[key] = $4
-            border[++bn] = key
-            next
+    # Validate both inventories completely before producing any verdict.
+    # FILENAME distinguishes an empty BEFORE file from the first AFTER row.
+    CMP_OUTPUT="$(awk -F'\t' -v beforefile="$CMP_BEFORE" -v afterfile="$CMP_AFTER" '
+        function input_name() {
+            return (FILENAME == beforefile) ? "before-inventory" : "after-inventory"
+        }
+        function invalid(reason) {
+            printf "compare: FAIL - %s line %d: %s\n", input_name(), FNR, reason > "/dev/stderr"
+            invalid_input = 1
         }
         {
+            if (NF != 4) {
+                invalid("expected exactly four TSV fields")
+                next
+            }
+            if ($1 == "") {
+                invalid("relative path must be nonempty")
+                next
+            }
+            if ($2 !~ /^[0-9]+,[0-9]+$/) {
+                invalid("invalid position " $2)
+                next
+            }
+            if ($3 !~ /^[A-Za-z_][A-Za-z0-9_]*$/) {
+                invalid("unsupported node type " $3)
+                next
+            }
+            if ($4 != "clean" && $4 != "trailing_error") {
+                invalid("unsupported qualifier " $4)
+                next
+            }
             key = $1 SUBSEP $2
-            atype[key] = $3
-            aorder[++an] = key
+            display_key = $1 ":" $2
+            if (FILENAME == beforefile) {
+                if (key in btype) {
+                    invalid("duplicate key " display_key)
+                    next
+                }
+                btype[key] = $3
+                bqual[key] = $4
+                border[++bn] = key
+                if ($3 == "accept_statement") before_accept++
+                if ($3 == "idms_accept_statement") before_idms++
+                if ($4 == "clean") before_clean++
+                if ($4 == "trailing_error") before_trailing++
+                next
+            }
+            if (FILENAME == afterfile) {
+                if (key in atype) {
+                    invalid("duplicate key " display_key)
+                    next
+                }
+                atype[key] = $3
+                aorder[++an] = key
+                if ($3 == "accept_statement") after_accept++
+                if ($3 == "idms_accept_statement") after_idms++
+            }
         }
         END {
-            for (i = 1; i <= bn; i++) {
-                k = border[i]
-                t = btype[k]
-                if (t == "accept_statement") before_accept++
-                if (t == "idms_accept_statement") before_idms++
-                if (bqual[k] == "clean") before_clean++
-                if (bqual[k] == "trailing_error") before_trailing++
-            }
-            for (i = 1; i <= an; i++) {
-                k = aorder[i]
-                t = atype[k]
-                if (t == "accept_statement") after_accept++
-                if (t == "idms_accept_statement") after_idms++
-            }
+            if (invalid_input) exit 2
 
             reclassified = 0
             converted = 0
@@ -576,8 +626,11 @@ cmd_compare() {
 
             exit (reclassified > 0) ? 1 : 0
         }
-    ' "$CMP_BEFORE" "$CMP_AFTER"
-    return $?
+    ' "$CMP_BEFORE" "$CMP_AFTER" 2>&1)"
+    CMP_STATUS=$?
+    printf '%s\n' "$CMP_OUTPUT"
+    [ "$CMP_STATUS" -eq 2 ] && return 1
+    return "$CMP_STATUS"
 }
 
 prepare_accept_paths() {
@@ -871,6 +924,10 @@ cmd_run() {
     fi
     if [ ! -d "$RUN_CORPUS_DIR" ]; then
         report "run: FAIL - corpus directory not found: $RUN_CORPUS_DIR"
+        return 1
+    fi
+    if ! validate_node_type_regex "$RUN_NODE_TYPE_REGEX"; then
+        report "run: FAIL - invalid node type regex (T-02-R04)"
         return 1
     fi
     if [ "$RUN_TEXT_PREFILTER_RE" != "--no-prefilter" ]; then

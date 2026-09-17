@@ -276,6 +276,50 @@ run_helper_snapshot() {
         esac
     fi
 }
+
+MALFORMED_NODE_SNAPSHOT="$SCRATCH/malformed-node-snapshot.tsv"
+MALFORMED_NODE_SNAPSHOT_OUT="$(TREE_SITTER="$FAKE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$TRACER_CORPUS" "$MALFORMED_NODE_SNAPSHOT" '[' 2>&1)"
+MALFORMED_NODE_SNAPSHOT_CODE=$?
+report_case 23 "malformed snapshot node regex fails before output" FAIL "$MALFORMED_NODE_SNAPSHOT_CODE"
+require_output_contains 23 "malformed snapshot node regex fails before output" "$MALFORMED_NODE_SNAPSHOT_OUT" 'snapshot: FAIL - invalid node type regex'
+if [ -e "$MALFORMED_NODE_SNAPSHOT" ]; then
+    CASE_RESULT="FAIL (malformed snapshot left a partial inventory)"
+    RETURN_CODE=1
+fi
+finish_case
+
+MALFORMED_NODE_RUN_TMP="$SCRATCH/malformed-node-run"
+mkdir "$MALFORMED_NODE_RUN_TMP"
+MALFORMED_NODE_RUN_OUT="$(DIFF_TMP="$MALFORMED_NODE_RUN_TMP" TREE_SITTER=true cmd_run HEAD "$TRACER_CORPUS" '[' --no-prefilter 2>&1)"
+MALFORMED_NODE_RUN_CODE=$?
+report_case 24 "malformed run node regex fails before scratch artifacts" FAIL "$MALFORMED_NODE_RUN_CODE"
+require_output_contains 24 "malformed run node regex fails before scratch artifacts" "$MALFORMED_NODE_RUN_OUT" 'run: FAIL - invalid node type regex'
+if [ -n "$(ls -A "$MALFORMED_NODE_RUN_TMP")" ]; then
+    CASE_RESULT="FAIL (malformed run node regex left scratch artifacts)"
+    RETURN_CODE=1
+fi
+finish_case
+
+PIPELINE_PARSER="$SCRATCH/failing-extraction-parser"
+cat > "$PIPELINE_PARSER" <<'EOF'
+#!/bin/sh
+printf '%s\n' '(accept_statement [0, 0] - [0, 6])'
+exit 2
+EOF
+chmod +x "$PIPELINE_PARSER"
+PIPELINE_OUT="$SCRATCH/pipeline-error.tsv"
+PIPELINE_LOG="$(TREE_SITTER="$PIPELINE_PARSER" bash "$DIFFERENTIAL" snapshot \
+    "$TRACER_CORPUS" "$PIPELINE_OUT" 2>&1)"
+PIPELINE_CODE=$?
+report_case 25 "snapshot extraction pipeline error propagates" FAIL "$PIPELINE_CODE"
+require_output_contains 25 "snapshot extraction pipeline error propagates" "$PIPELINE_LOG" 'snapshot: FAIL - parser extraction pipeline failed'
+if [ -e "$PIPELINE_OUT" ]; then
+    CASE_RESULT="FAIL (pipeline error left a partial inventory)"
+    RETURN_CODE=1
+fi
+finish_case
+
 TRACER_REGEX='exec_sql_statement|read_statement'
 TRACER_OUT="$(DIFF_TMP="$TRACER_TMP" TREE_SITTER=true cmd_run HEAD "$TRACER_CORPUS" "$TRACER_REGEX" 2>&1)"
 TRACER_CODE=$?
@@ -382,5 +426,51 @@ OUT6="$(bash "$DIFFERENTIAL" compare "$B6" "$A6")"; CODE6=$?
 report_case 6 "both inventories empty, zero records compared" PASS "$CODE6"
 require_output_contains 6 "both inventories empty, zero records compared" "$OUT6" "zero records compared"
 finish_case
+
+run_invalid_inventory_case() {
+    CASE_NUMBER="$1"
+    CASE_DESCRIPTION="$2"
+    CASE_SIDE="$3"
+    CASE_ROWS="$4"
+    CASE_EXPECTED="$5"
+    CASE_BEFORE="$SCRATCH/invalid-before-${CASE_NUMBER}.txt"
+    CASE_AFTER="$SCRATCH/invalid-after-${CASE_NUMBER}.txt"
+    : > "$CASE_BEFORE"
+    : > "$CASE_AFTER"
+    if [ "$CASE_SIDE" = "before" ]; then
+        printf '%b' "$CASE_ROWS" > "$CASE_BEFORE"
+    else
+        printf '%b' "$CASE_ROWS" > "$CASE_AFTER"
+    fi
+    CASE_OUTPUT="$(bash "$DIFFERENTIAL" compare "$CASE_BEFORE" "$CASE_AFTER" 2>&1)"
+    CASE_CODE=$?
+    report_case "$CASE_NUMBER" "$CASE_DESCRIPTION" FAIL "$CASE_CODE"
+    require_output_contains "$CASE_NUMBER" "$CASE_DESCRIPTION" "$CASE_OUTPUT" "$CASE_EXPECTED"
+    if printf '%s\n' "$CASE_OUTPUT" | grep -Eq '^(RECLASSIFIED_COUNT|CONVERTED_COUNT|NEW_COUNT):'; then
+        CASE_RESULT="FAIL (invalid inventory emitted a differential verdict)"
+        RETURN_CODE=1
+    fi
+    finish_case
+}
+
+run_invalid_inventory_case 26 "duplicate before key is rejected" before \
+    'sample.cbl\t1,2\taccept_statement\tclean\nsample.cbl\t1,2\taccept_statement\tclean\n' \
+    'before-inventory line 2: duplicate key sample.cbl:1,2'
+run_invalid_inventory_case 27 "duplicate after key IDMS then standard is rejected" after \
+    'sample.cbl\t1,2\tidms_accept_statement\tclean\nsample.cbl\t1,2\taccept_statement\tclean\n' \
+    'after-inventory line 2: duplicate key sample.cbl:1,2'
+run_invalid_inventory_case 28 "duplicate after key standard then IDMS is rejected" after \
+    'sample.cbl\t1,2\taccept_statement\tclean\nsample.cbl\t1,2\tidms_accept_statement\tclean\n' \
+    'after-inventory line 2: duplicate key sample.cbl:1,2'
+run_invalid_inventory_case 29 "short TSV row is rejected" before \
+    'sample.cbl\t1,2\taccept_statement\n' 'before-inventory line 1: expected exactly four TSV fields'
+run_invalid_inventory_case 30 "long TSV row is rejected" after \
+    'sample.cbl\t1,2\taccept_statement\tclean\textra\n' 'after-inventory line 1: expected exactly four TSV fields'
+run_invalid_inventory_case 31 "invalid position is rejected" before \
+    'sample.cbl\trow,2\taccept_statement\tclean\n' 'before-inventory line 1: invalid position'
+run_invalid_inventory_case 32 "unsupported node type is rejected" after \
+    'sample.cbl\t1,2\tnot-a-node\tclean\n' 'after-inventory line 1: unsupported node type'
+run_invalid_inventory_case 33 "unsupported qualifier is rejected" before \
+    'sample.cbl\t1,2\taccept_statement\tunknown\n' 'before-inventory line 1: unsupported qualifier'
 
 exit "$RETURN_CODE"
