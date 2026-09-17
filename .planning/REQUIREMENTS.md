@@ -134,15 +134,39 @@ trusted.
 
 ## Traceability
 
-Populated during roadmap creation. Every v0.26.0 requirement must map to exactly one phase.
+Every active v0.26.0 requirement maps to exactly one roadmap phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| FOUND-01 | Phase 5 | Pending |
+| FOUND-02 | Phase 5 | Pending |
+| FOUND-03 | Phase 5 | Pending |
+| PREP-01 | Phase 7 | Pending |
+| PREP-02 | Phase 7 | Pending |
+| PREP-03 | Phase 7 | Pending |
+| PREP-04 | Phase 7 | Pending |
+| MAP-01 | Phase 6 | Pending |
+| MAP-02 | Phase 6 | Pending |
+| MAP-03 | Phase 6 | Pending |
+| QUAL-01 | Phase 8 | Pending |
+| QUAL-02 | Phase 8 | Pending |
+| QUAL-03 | Phase 8 | Pending |
+| REV-01 | Phase 9 | Pending |
+| REV-02 | Phase 9 | Pending |
+| REV-03 | Phase 9 | Pending |
+| REV-04 | Phase 9 | Pending |
+| BENCH-01 | Phase 5 | Pending |
+| BENCH-02 | Phase 10 | Pending |
+| BENCH-03 | Phase 10 | Pending |
+| REC-01 | Phase 11 | Pending |
+| REC-02 | Phase 11 | Pending |
+| REC-03 | Phase 11 | Pending |
 
 **Coverage:**
 - v0.26.0 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23
+- Mapped to phases: 23
+- Unmapped: 0
+- Duplicated: 0
 
 ---
 *Requirements defined: 2026-09-17*
