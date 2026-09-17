@@ -16,9 +16,9 @@ provides:
 affects: [02-08, 02-09, 02-10, 02-11]
 
 actuals:
-  tokens: 9827
+  tokens: 10181
   tasks: 3
-  commits: 4
+  commits: 5
 
 tech-stack:
   added: []
@@ -95,6 +95,7 @@ Each implementation task was committed atomically:
 2. **Task 2: Reject malformed and duplicate inventory keys before differential verdicts** - `e281264` (`fix`)
 3. **Task 3: Commit the exact 14-verb and semantic-role RED query gate** - `fc7f826` (`test`)
    - Exact whole-stream strengthening - `13713f3` (`fix`)
+   - Invalid-subject staged-output validation - `8ef8c1b` (`fix`)
 
 ## Files Created/Modified
 
@@ -129,7 +130,7 @@ All inputs were synthetic and neutral. No proprietary corpus source or excerpt w
 - `--expect-red=roles` exits 1 before verb repair, proving it cannot pass at the wrong stage.
 - `--invalid-only` exits 1 while the CR-04 negative subject still emits graph-bearing captures; plan 02-08 owns that GREEN transition.
 - A deliberately unavailable CLI and a forced normalizer failure each exit 2 with `HARNESS_ERROR`, so infrastructure failure cannot masquerade as expected RED.
-- Gate SHA-256: `468ff37a2d420836b989ce00f322710b6cb3990c68b852d53e01d04a02263ce6`.
+- Gate SHA-256: `598ba240326cab2243613488c62590e1c043db4e1a8d63fcc9784bae098944c0`.
 
 ## Verification Results
 
@@ -180,9 +181,17 @@ All inputs were synthetic and neutral. No proprietary corpus source or excerpt w
 - **Verification:** Verb RED passes exactly; normal, premature roles, and invalid modes remain expected failures.
 - **Committed in:** `13713f3`
 
+**4. [Rule 2 - Missing Critical] Validated invalid-subject output during verb staging**
+- **Found during:** Post-task review of Task 3's staged handoff contract
+- **Issue:** Verb mode isolated the plan 02-08 failure but did not reject malformed or non-record/set rows from the invalid subject.
+- **Fix:** Require the staged invalid output to be nonempty, structurally valid six-column TSV, and graph-bearing only until plan 02-08 turns it GREEN.
+- **Files modified:** `run_idms_query_capture.sh`
+- **Verification:** Verb RED still passes; invalid-only remains RED; harness errors remain exit 2.
+- **Committed in:** `8ef8c1b`
+
 ---
 
-**Total deviations:** 3 auto-fixed (2 blocking, 1 missing critical)
+**Total deviations:** 4 auto-fixed (2 blocking, 2 missing critical)
 **Impact on plan:** Both fixes preserve existing contracts and were required to execute the planned tests. No grammar-family path or dependency file changed.
 
 ## Issues Encountered
@@ -217,7 +226,7 @@ None. The existing lockfile-pinned CLI is restored automatically when absent.
 ## Self-Check: PASSED
 
 - All three implementation files exist, and `run_idms_query_capture.sh` is executable mode 100755.
-- Commits `6bbdd47`, `e281264`, `fc7f826`, and `13713f3` exist on `agent-02-closeout`.
+- Commits `6bbdd47`, `e281264`, `fc7f826`, `13713f3`, and `8ef8c1b` exist on `agent-02-closeout`.
 - Every plan verification command and staged failure-mode assertion produced the expected status.
 - Only fork-local scripts and this summary were changed; no grammar, generated parser, corpus, query, shim, ROADMAP, or STATE file was modified.
 
