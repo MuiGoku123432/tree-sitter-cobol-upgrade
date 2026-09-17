@@ -16,9 +16,9 @@ provides:
 affects: [02-08, 02-09, 02-10, 02-11]
 
 actuals:
-  tokens: 9360
+  tokens: 9827
   tasks: 3
-  commits: 3
+  commits: 4
 
 tech-stack:
   added: []
@@ -94,6 +94,7 @@ Each implementation task was committed atomically:
 1. **Task 1: Reproduce and close the symlink containment bypass through snapshot and run** - `6bbdd47` (`fix`)
 2. **Task 2: Reject malformed and duplicate inventory keys before differential verdicts** - `e281264` (`fix`)
 3. **Task 3: Commit the exact 14-verb and semantic-role RED query gate** - `fc7f826` (`test`)
+   - Exact whole-stream strengthening - `13713f3` (`fix`)
 
 ## Files Created/Modified
 
@@ -128,7 +129,7 @@ All inputs were synthetic and neutral. No proprietary corpus source or excerpt w
 - `--expect-red=roles` exits 1 before verb repair, proving it cannot pass at the wrong stage.
 - `--invalid-only` exits 1 while the CR-04 negative subject still emits graph-bearing captures; plan 02-08 owns that GREEN transition.
 - A deliberately unavailable CLI and a forced normalizer failure each exit 2 with `HARNESS_ERROR`, so infrastructure failure cannot masquerade as expected RED.
-- Gate SHA-256: `dbbf86a2f58b2436bc32066a463e6cd6e93d6245f62d76c58015480078fca3ab`.
+- Gate SHA-256: `468ff37a2d420836b989ce00f322710b6cb3990c68b852d53e01d04a02263ce6`.
 
 ## Verification Results
 
@@ -171,9 +172,17 @@ All inputs were synthetic and neutral. No proprietary corpus source or excerpt w
 - **Verification:** Exact version check passes and staged query execution succeeds.
 - **Committed in:** `fc7f826`
 
+**3. [Rule 2 - Missing Critical] Added complete staged-stream comparison**
+- **Found during:** Post-task review of Task 3 against the plan's exact-output requirement
+- **Issue:** Diagnostic-set equality alone pinned every mismatch but did not itself compare the full mode-specific capture stream.
+- **Fix:** Derive a complete staged oracle from the future-GREEN TSV and compare every normalized row, range, value, count, and multiplicity.
+- **Files modified:** `run_idms_query_capture.sh`
+- **Verification:** Verb RED passes exactly; normal, premature roles, and invalid modes remain expected failures.
+- **Committed in:** `13713f3`
+
 ---
 
-**Total deviations:** 2 auto-fixed (2 blocking)
+**Total deviations:** 3 auto-fixed (2 blocking, 1 missing critical)
 **Impact on plan:** Both fixes preserve existing contracts and were required to execute the planned tests. No grammar-family path or dependency file changed.
 
 ## Issues Encountered
@@ -208,7 +217,7 @@ None. The existing lockfile-pinned CLI is restored automatically when absent.
 ## Self-Check: PASSED
 
 - All three implementation files exist, and `run_idms_query_capture.sh` is executable mode 100755.
-- Commits `6bbdd47`, `e281264`, and `fc7f826` exist on `agent-02-closeout`.
+- Commits `6bbdd47`, `e281264`, `fc7f826`, and `13713f3` exist on `agent-02-closeout`.
 - Every plan verification command and staged failure-mode assertion produced the expected status.
 - Only fork-local scripts and this summary were changed; no grammar, generated parser, corpus, query, shim, ROADMAP, or STATE file was modified.
 
