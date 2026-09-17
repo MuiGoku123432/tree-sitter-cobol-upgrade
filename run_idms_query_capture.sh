@@ -82,6 +82,7 @@ INVALID_RAW="$SCRATCH_DIR/invalid.raw"
 FULL_TSV="$SCRATCH_DIR/full.tsv"
 INVALID_TSV="$SCRATCH_DIR/invalid.tsv"
 EXPECTED_TSV="$SCRATCH_DIR/expected.tsv"
+MODE_EXPECTED_TSV="$SCRATCH_DIR/mode-expected.tsv"
 DIAGNOSTICS="$SCRATCH_DIR/diagnostics.tsv"
 
 cat > "$FULL_FIXTURE" <<'FIXTURE_EOF'
@@ -306,6 +307,46 @@ if [ $? -ne 0 ]; then
     harness_error "capture contract analyzer failed"
 fi
 
+# Build the complete expected stream for the selected stage from the single
+# future-GREEN oracle, then compare every row exactly while preserving actual
+# query source order. This pins ranges, text, count, and multiplicity without
+# assuming pattern-group order from tree-sitter's query printer.
+python3 - "$EXPECTED_TSV" "$MODE_EXPECTED_TSV" "$MODE" <<'PY'
+import sys
+from pathlib import Path
+
+source, destination = map(Path, sys.argv[1:3])
+mode = sys.argv[3]
+rows = [line.split("\t") for line in source.read_text(encoding="utf-8").splitlines()]
+missing_verb_lines = {3, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16}
+output = []
+for row in rows:
+    line = int(row[1])
+    if mode == "verbs" and row == ["verb", "8", "7", "8", "13", "ACCEPT"]:
+        output.append(["verb", "8", "7", "8", "50", "ACCEPT WS-DB-KEY FROM CUSTOMER-REC CURRENCY"])
+        continue
+    if mode == "verbs" and row[0] == "verb" and line in missing_verb_lines:
+        continue
+    if mode == "roles" and row == ["verb", "6", "7", "6", "12", "READY"]:
+        output.append(row)
+        output.append(["record", "6", "13", "6", "26", "CUSTOMER-AREA"])
+        continue
+    if mode == "verbs" and row == ["record", "5", "17", "5", "28", "ACCOUNT-REC"]:
+        output.append(row)
+        output.append(["record", "6", "13", "6", "26", "CUSTOMER-AREA"])
+        continue
+    if mode in {"verbs", "roles"} and row == ["record", "18", "22", "18", "31", "ORDER-REC"]:
+        output.append(["record", "18", "12", "18", "21", "DUPLICATE"])
+        continue
+    output.append(row)
+    if mode in {"verbs", "roles"} and row == ["record", "24", "17", "24", "25", "AREA-REC"]:
+        output.append(["set", "24", "33", "24", "45", "CONTROL-AREA"])
+destination.write_text("".join("\t".join(row) + "\n" for row in output), encoding="utf-8")
+PY
+if [ $? -ne 0 ]; then
+    harness_error "could not construct exact staged oracle"
+fi
+
 if [ -s "$INVALID_TSV" ]; then
     if [ "$MODE" = "invalid" ] || [ "$MODE" = "green" ]; then
         report "CONTRACT_MISMATCH: invalid update subject emitted graph-bearing captures"
@@ -365,6 +406,26 @@ if actual != wanted:
     sys.exit(1)
 PY
 CONTRACT_STATUS=$?
+if [ "$MODE" != "invalid" ]; then
+    python3 - "$MODE_EXPECTED_TSV" "$FULL_TSV" <<'PY'
+import sys
+from collections import Counter
+from pathlib import Path
+
+expected_path, actual_path = map(Path, sys.argv[1:])
+expected = expected_path.read_text(encoding="utf-8").splitlines()
+actual = actual_path.read_text(encoding="utf-8").splitlines()
+sys.exit(0 if len(expected) == len(actual) and Counter(expected) == Counter(actual) else 1)
+PY
+    EXACT_STATUS=$?
+    if [ "$EXACT_STATUS" -ne 0 ]; then
+        report "CONTRACT_MISMATCH: exact ordered capture stream differs for mode '$MODE'"
+        if [ "${IDMS_DEBUG:-0}" = "1" ]; then
+            diff -u "$MODE_EXPECTED_TSV" "$FULL_TSV"
+        fi
+        CONTRACT_STATUS=1
+    fi
+fi
 
 if [ "$MODE" = "invalid" ]; then
     if [ "$INVALID_MISMATCH" -eq 0 ]; then
@@ -373,7 +434,7 @@ if [ "$MODE" = "invalid" ]; then
     fi
     exit 1
 fi
-if [ "$INVALID_MISMATCH" -ne 0 ] && [ "$MODE" != "verbs" ] && [ "$MODE" != "roles" ]; then
+if [ "$INVALID_MISMATCH" -ne 0 ] && [ "$MODE" != "verbs" ]; then
     exit 1
 fi
 if [ "$CONTRACT_STATUS" -ne 0 ]; then
