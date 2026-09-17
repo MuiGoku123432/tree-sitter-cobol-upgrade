@@ -1,6 +1,8 @@
 #!/bin/bash
 # Exact staged IDMS query contract gate. Every fixture name and statement is
 # hand-written and synthetic. No repository corpus is read by this script.
+# The oracle records graph-bearing captures only: area and ambiguous scope
+# operands are intentionally absent because syntax does not prove either role.
 #
 # Exit 0: requested GREEN contract or exact staged RED matched.
 # Exit 1: contract mismatch.
@@ -243,16 +245,12 @@ verb	18	7	18	11	FIND
 record	18	22	18	31	ORDER-REC
 verb	19	7	19	13	OBTAIN
 record	19	20	19	29	ORDER-REC
-set	19	37	19	46	ORDER-SET
 verb	20	7	20	11	FIND
 record	20	17	20	26	ORDER-REC
-set	20	34	20	43	ORDER-SET
 verb	21	7	21	13	OBTAIN
 record	21	20	21	29	ORDER-REC
-set	21	37	21	46	ORDER-SET
 verb	22	7	22	11	FIND
 record	22	14	22	23	ORDER-REC
-set	22	31	22	40	ORDER-SET
 verb	23	7	23	13	OBTAIN
 record	23	14	23	23	ORDER-REC
 verb	24	7	24	11	FIND
@@ -327,11 +325,7 @@ for row in rows:
         continue
     if mode == "verbs" and row[0] == "verb" and line in missing_verb_lines:
         continue
-    if mode == "roles" and row == ["verb", "6", "7", "6", "12", "READY"]:
-        output.append(row)
-        output.append(["record", "6", "13", "6", "26", "CUSTOMER-AREA"])
-        continue
-    if mode == "verbs" and row == ["record", "5", "17", "5", "28", "ACCOUNT-REC"]:
+    if mode in {"verbs", "roles"} and row == ["verb", "6", "7", "6", "12", "READY"]:
         output.append(row)
         output.append(["record", "6", "13", "6", "26", "CUSTOMER-AREA"])
         continue
@@ -339,8 +333,17 @@ for row in rows:
         output.append(["record", "18", "12", "18", "21", "DUPLICATE"])
         continue
     output.append(row)
-    if mode in {"verbs", "roles"} and row == ["record", "24", "17", "24", "25", "AREA-REC"]:
-        output.append(["set", "24", "33", "24", "45", "CONTROL-AREA"])
+    if mode in {"verbs", "roles"}:
+        scope_sets = {
+            ("19", "ORDER-REC"): ["set", "19", "37", "19", "46", "ORDER-SET"],
+            ("20", "ORDER-REC"): ["set", "20", "34", "20", "43", "ORDER-SET"],
+            ("21", "ORDER-REC"): ["set", "21", "37", "21", "46", "ORDER-SET"],
+            ("22", "ORDER-REC"): ["set", "22", "31", "22", "40", "ORDER-SET"],
+            ("24", "AREA-REC"): ["set", "24", "33", "24", "45", "CONTROL-AREA"],
+        }
+        staged_set = scope_sets.get((row[1], row[5])) if row[0] == "record" else None
+        if staged_set:
+            output.append(staged_set)
 destination.write_text("".join("\t".join(row) + "\n" for row in output), encoding="utf-8")
 PY
 if [ $? -ne 0 ]; then
@@ -407,6 +410,10 @@ role_defects = {
     ("unexpected", "record", "6", "13", "6", "26", "CUSTOMER-AREA"),
     ("missing", "record", "18", "22", "18", "31", "ORDER-REC"),
     ("unexpected", "record", "18", "12", "18", "21", "DUPLICATE"),
+    ("unexpected", "set", "19", "37", "19", "46", "ORDER-SET"),
+    ("unexpected", "set", "20", "34", "20", "43", "ORDER-SET"),
+    ("unexpected", "set", "21", "37", "21", "46", "ORDER-SET"),
+    ("unexpected", "set", "22", "31", "22", "40", "ORDER-SET"),
     ("unexpected", "set", "24", "33", "24", "45", "CONTROL-AREA"),
 }
 actual = set(rows)
