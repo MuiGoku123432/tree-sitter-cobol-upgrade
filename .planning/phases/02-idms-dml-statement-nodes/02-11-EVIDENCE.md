@@ -4,7 +4,7 @@ plan: 11
 task: 1
 status: raw-evidence-only
 baseline: 39886c7
-implementation_ref: f061fed19f0ee4f6e7eb4fc98c05fea3d38be6a0
+implementation_ref: ea6ed2fae7c77f15a956ab45bf37e37675ce1837
 ---
 
 # Phase 02 Plan 11 Task 1 Raw Closeout Evidence
@@ -20,7 +20,7 @@ relative path, source line, or inventory row is recorded.
 - Overall harness status: PASS (exit 0)
 - Cleanup status: pass
 - Baseline: `39886c7`
-- Current implementation ref: `f061fed19f0ee4f6e7eb4fc98c05fea3d38be6a0`
+- Current implementation ref: `ea6ed2fae7c77f15a956ab45bf37e37675ce1837`
 - Harness status: PASS (exit 0)
 - DCC status: PASS (exit 0)
 - Estate status: PASS (exit 0)
@@ -28,7 +28,7 @@ relative path, source line, or inventory row is recorded.
 - GOWORK cascade status: PASS (exit 0)
 - Guard status: PASS (all range and self-test gates)
 - Resolved DCC root: `/Users/e1001547-mbp-it/repos/mine/cobolCode/cam-corpus-dcc/DCC`
-- Resolved estate root: `/private/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/opencode/mainframe-consolidated-parser-assessment/mainframe-consolidated-20260827-134930/Users/e1001547-mbp-it/repos/mine/cobolCode/mainframe-consolidated`
+- Resolved estate root: `/Users/e1001547-mbp-it/repos/mine/devDeps/tree-sitter-cobol-upgrade/estate`
 - Estate differential input: exactly `$TEMP_WORKTREE/estate`
 
 ## Verdict Artifact Integrity
@@ -94,9 +94,9 @@ exactly 3,781 declared members, 1,369 compilable programs, and the default-mode
 
 Commands:
 
-- `(cd "/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/tmp.Lx8IDNDBSs" && GOWORK=off go work init "/Users/e1001547-mbp-it/repos/mine/GoApps/gortex" "/Users/e1001547-mbp-it/repos/mine/devDeps/tree-sitter-cobol-phase2-fixes/forest-shim/cobol")`
-- `(cd "/Users/e1001547-mbp-it/repos/mine/GoApps/gortex" && GOWORK="/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/tmp.Lx8IDNDBSs/go.work" go list -m -json github.com/alexaandru/go-sitter-forest/cobol)`
-- `(cd "/Users/e1001547-mbp-it/repos/mine/GoApps/gortex" && GOWORK="/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/tmp.Lx8IDNDBSs/go.work" go test ./internal/parser/forest/cobolprobe/ -run TestErrorCascade -count=2 -args -enhanced-parser)`
+- `(cd "/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/tmp.04XLxTnrdO" && GOWORK=off go work init "/Users/e1001547-mbp-it/repos/mine/GoApps/gortex" "/Users/e1001547-mbp-it/repos/mine/devDeps/tree-sitter-cobol-phase2-fixes/forest-shim/cobol")`
+- `(cd "/Users/e1001547-mbp-it/repos/mine/GoApps/gortex" && GOWORK="/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/tmp.04XLxTnrdO/go.work" go list -m -json github.com/alexaandru/go-sitter-forest/cobol)`
+- `(cd "/Users/e1001547-mbp-it/repos/mine/GoApps/gortex" && GOWORK="/var/folders/ks/sc4623gx7c144xx9_sxj53b00000gn/T/tmp.04XLxTnrdO/go.work" go test ./internal/parser/forest/cobolprobe/ -run TestErrorCascade -count=2 -args -enhanced-parser)`
 
 | Gate | Raw status |
 |---|---|
