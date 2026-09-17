@@ -643,7 +643,9 @@ prepare_accept_paths() {
     # Named estate branch: preserve the authoritative member/program checks,
     # but apply the recorded ACCEPT statement denominator only to the default
     # selection. Custom SQL/collision runs report their measured denominator.
-    if [ "$PREP_CORPUS_ROOT" = "$TOP_DIR/estate" ] && [ -d "$PREP_CORPUS_ROOT/endevor" ]; then
+    if { [ "$PREP_CORPUS_ROOT" = "$TOP_DIR/estate" ] ||
+         [ "$PREP_CORPUS_ROOT" = "$(cd -P "$TOP_DIR/estate" 2>/dev/null && pwd)" ]; } &&
+       [ -d "$PREP_CORPUS_ROOT/endevor" ]; then
         PREP_STATS="$(mktemp)"
         PREP_ESTATE_PREFILTER="$PREP_TEXT_PREFILTER_RE"
         [ "$PREP_CUSTOM_SELECTION" -eq 0 ] && PREP_ESTATE_PREFILTER="--default-accept-selection"
@@ -992,7 +994,7 @@ PY
         fi
     done
 
-    RUN_CORPUS_DIR_ABS=$(cd "$RUN_CORPUS_DIR" && pwd)
+    RUN_CORPUS_DIR_ABS=$(cd -P "$RUN_CORPUS_DIR" && pwd)
     prepare_accept_paths "$RUN_CORPUS_DIR_ABS" "$SELECTED_PATHS" \
         "$RUN_TEXT_PREFILTER_RE" "$RUN_CUSTOM_SELECTION"
     if [ $? -ne 0 ]; then

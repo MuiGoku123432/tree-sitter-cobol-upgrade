@@ -250,6 +250,23 @@ report_case 16 "estate branch retains default ACCEPT denominator gate" FAIL "$ES
 require_output_contains 16 "estate branch retains default ACCEPT denominator gate" "$ESTATE_DEFAULT_OUT" 'recorded 3781/1369/2391 population'
 finish_case
 
+# A lexical estate symlink must activate the same authoritative selector. This
+# pins cmd_run's physical corpus-root canonicalization without reading any real
+# corpus content.
+SYMLINK_REPO="$SCRATCH/symlink-repo"
+mkdir "$SYMLINK_REPO"
+ln -s "$ESTATE_CORPUS" "$SYMLINK_REPO/estate"
+TOP_DIR="$SYMLINK_REPO"
+SYMLINK_ESTATE_ABS=$(cd -P "$SYMLINK_REPO/estate" && pwd)
+SYMLINK_ESTATE_PATHS="$SCRATCH/symlink-estate-paths.bin"
+SYMLINK_ESTATE_OUT="$(prepare_accept_paths "$SYMLINK_ESTATE_ABS" "$SYMLINK_ESTATE_PATHS" '(^|[^A-Za-z0-9-])EXEC[[:space:]]+SQL([^A-Za-z0-9-]|$)' 1 2>&1)"
+SYMLINK_ESTATE_CODE=$?
+TOP_DIR="$SAVED_TOP_DIR"
+report_case 34 "physical estate symlink activates authoritative selector" PASS "$SYMLINK_ESTATE_CODE"
+require_output_contains 34 "physical estate symlink activates authoritative selector" "$SYMLINK_ESTATE_OUT" 'estate selector: custom selection recorded denominator'
+require_output_contains 34 "physical estate symlink activates authoritative selector" "$SYMLINK_ESTATE_OUT" 'declared_cobol_members=3781 compilable_programs=1369'
+finish_case
+
 TRACER_CORPUS="$SCRATCH/tracer-corpus"
 TRACER_TMP="$SCRATCH/tracer-run"
 mkdir "$TRACER_CORPUS" "$TRACER_TMP"
