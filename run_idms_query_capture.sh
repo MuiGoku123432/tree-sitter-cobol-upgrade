@@ -358,6 +358,26 @@ else
     INVALID_MISMATCH=0
 fi
 
+if [ "$MODE" = "verbs" ] && [ "$INVALID_MISMATCH" -ne 0 ]; then
+    python3 - "$INVALID_TSV" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    rows = [line.split("\t") for line in path.read_text(encoding="utf-8").splitlines() if line]
+except OSError:
+    sys.exit(1)
+if not rows or any(len(row) != 6 or row[0] not in {"record", "set"} for row in rows):
+    sys.exit(1)
+sys.exit(0)
+PY
+    if [ $? -ne 0 ]; then
+        report "CONTRACT_MISMATCH: invalid-update RED differs from the exact plan 02-08 handoff"
+        exit 1
+    fi
+fi
+
 python3 - "$DIAGNOSTICS" "$MODE" <<'PY'
 import sys
 from pathlib import Path
