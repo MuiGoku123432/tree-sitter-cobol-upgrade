@@ -10,15 +10,26 @@ fork stays maintainable and cheap to pull upstream fixes into. Offering the work
 preserved option, **not a goal** (decision D6, 2026-08-28).
 
 The consumer is `gortex` (Gortex Mainframe Engine), which vendors this grammar to build a
-knowledge graph of the estate. This repo supplies the parser for the COBOL leg of a four-stage
-retrieve → consolidate → preprocess → index pipeline.
+knowledge graph of the estate. This repo now owns both the parser and a separate Go preprocessing
+module for the COBOL leg of a four-stage retrieve -> consolidate -> preprocess -> index pipeline.
 
 ## Core Value
 
-A CICS transaction/program/map name, a DB2 table name, and an IDMS record + set name are each
-reachable as **named AST nodes with accurate positions** — because those nodes are what become
-`program → transaction`, `program → table`, and `program → record/set` graph edges. Without them
-the digital twin has no data-access layer.
+Raw estate COBOL becomes a source-mapped, measurable AST whose graph-relevant identifiers remain
+accurate and whose degraded parses are routed for review rather than silently trusted.
+
+## Current Milestone: v0.26.0 Estate Parse Recovery
+
+**Goal:** Turn raw consolidated COBOL into source-mapped parser input, measure parse quality,
+route degraded files into a secure review queue, and improve recurring grammar gaps from evidence.
+
+**Target features:**
+- A standalone top-level Go module under `preprocessor/`, isolated from `forest-shim/`.
+- Deterministic handling for Endevor `-INC`, IDMS structural lines, fixed-format columns, and continuations.
+- Reversible source mappings from transformed coordinates to original source coordinates.
+- Green/amber/red quality classification from Tree-sitter ERROR/MISSING nodes and retained structure.
+- Deduplicated, provider-neutral AI review packets containing minimized evidence and no external model calls.
+- A reproducible 1,369-program estate benchmark and evidence-driven residual grammar improvements.
 
 ## Requirements
 
@@ -27,13 +38,17 @@ the digital twin has no data-access layer.
 - [x] Local vendoring path — grammar changes reach gortex through the refreshed forest shim.
 - [x] `EXEC CICS` blocks parse into named nodes exposing transaction / program / map operands.
 - [x] `EXEC SQL` blocks parse into bounded named nodes exposing physical DB2 table names.
+- [x] IDMS DML statements parse into semantically constrained named nodes exposing record, set,
+  area, scope, and exact verb roles.
 - [x] Standard COBOL regression gates, commit separability, and the estate-leak guard remain green.
 
 Validated through Phase 4: EXEC SQL Blocks on 2026-09-14.
 
 ### Active
 
-- [ ] IDMS DML statements parse into named nodes exposing record + set operands
+- [ ] Raw consolidated COBOL can be deterministically transformed into parser-ready source with reversible mappings.
+- [ ] Every parse receives an auditable quality grade and degraded parses enter a secure review queue.
+- [ ] Recurring post-preprocessing failures drive measured, regression-tested grammar improvements.
 
 See `.planning/REQUIREMENTS.md` for the checkable form.
 
@@ -41,14 +56,6 @@ See `.planning/REQUIREMENTS.md` for the checkable form.
 
 - **`EXEC DLI` support** — zero occurrences across the 1,369 real programs measured. Locked
   decision D4.
-- **Endevor `-INC <MEMBER>` rewriting** — 837 of 1,361 programs (61%), 12,819 statements across
-  1,639 files. Not COBOL at all; a site include directive. Belongs in preprocessing in
-  the preprocessing repo, which rewrites `-INC NAME` → `       COPY NAME.` padded to col 72 with
-  the sequence area (cols 73-80) preserved.
-- **IDMS structural constructs** — `IDMS-CONTROL SECTION`, `PROTOCOL.`, `SCHEMA SECTION`,
-  `DB x WITHIN y`. The real IDMS precompiler comments these out; a preprocessor should do the
-  same. Locked decision D3 splits responsibility here: preprocessing owns the structural
-  constructs, the grammar owns the statements.
 - **The `site-macro` / `%`-macro site preprocessor language** — not COBOL.
 - **Cascade-removal as the goal** — removing ERROR nodes is mostly achievable in preprocessing
   and yields no graph content. Locked decision D1.
@@ -152,6 +159,14 @@ locally keeps the fork's tracked diff at zero. FORK-02 asserts this placement.
   must disambiguate on the operand tail, never on the verb alone. This is a required regression
   gate, not an edge case — an over-eager rule silently breaks ordinary COBOL.
 - **License**: MIT, inherited from upstream. Keep it.
+- **Preprocessor placement**: The Go preprocessor lives in a top-level `preprocessor/` module in
+  this repository. It must not alter the drop-in API or module identity of `forest-shim/cobol`.
+- **Source fidelity**: Original source is read-only. Every transformation preserves a reversible
+  generated-to-original coordinate map; silent semantic rewrites are prohibited.
+- **Review privacy**: Review records contain hashes, metrics, normalized signatures, and minimized
+  synthetic or redacted context. Raw estate source is never sent to an external model by default.
+- **Milestone history**: Formal v0.25.0 archive/tag closeout was intentionally skipped on
+  2026-09-17 to continue delivery. Existing Phase 1-4 artifacts remain in `.planning/phases/`.
 
 ## Success Metric
 
@@ -252,6 +267,9 @@ holding 697 MB of proprietary source is a risk independent of PRs.
 | D4 — `EXEC DLI` out | Zero occurrences in the estate | — Pending |
 | D5 — vendoring path first | Avoids stranding finished grammar work behind an untested pipe | — Pending |
 | D6 — upstream PRs not a goal; keep PR-readiness only where free | PR-readiness is recoverable on demand from separable commits; FORK-01 cost real effort for zero present value | — Applied to Phase 1 |
+| D7 — colocate preprocessing as an isolated Go module | Parser and source transformations evolve against the same measured corpus while the forest shim stays a drop-in parser module | — Pending v0.26.0 |
+| D8 — classify parse quality instead of binary success | Tree-sitter always returns a tree; ERROR/MISSING ranges and retained structure determine whether output is trusted, warned, or quarantined | — Pending v0.26.0 |
+| D9 — AI review is provider-neutral and offline by default | Proprietary source must not leave the machine; this milestone exports minimized review packets but invokes no external model | — Pending v0.26.0 |
 
 ## Open Questions
 
@@ -265,4 +283,20 @@ Carried as **open**. These are not decisions and must not be treated as such.
 | OQ-4 | Upstream appetite — has `@yutaro-sakamoto` expressed a position on dialect support? | PR-shaped investment | Worth an issue before investing in PR-shaped work. |
 
 ---
-*Last updated: 2026-09-11 after Phase 3 EXEC CICS completion*
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition:**
+1. Move validated requirements to Validated.
+2. Move invalidated requirements to Out of Scope with the reason.
+3. Add newly discovered requirements and durable decisions.
+4. Update context and constraints when measured evidence changes them.
+
+**After each milestone:**
+1. Review the full project description and core value.
+2. Audit active and out-of-scope requirements.
+3. Record shipped capabilities, remaining gaps, and decision outcomes.
+
+---
+*Last updated: 2026-09-17 for v0.26.0 Estate Parse Recovery*

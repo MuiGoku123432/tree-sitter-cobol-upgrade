@@ -1,41 +1,35 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.25.0
-milestone_name: milestone
-current_phase: 2
-current_phase_name: IDMS DML Statement Nodes
+milestone: v0.26.0
+milestone_name: Estate Parse Recovery
 status: planning
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-09-14T23:20:09.415Z"
-last_activity: 2026-09-14
-last_activity_desc: Phase 04 complete, transitioned to Phase 2
+last_updated: "2026-09-17T17:52:57.047Z"
+last_activity: 2026-09-17
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 25
-  completed_plans: 25
-state_head: b52d880a1024cc0ff35ef1ed2a77b7b54a9cd1a9
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-11)
+See: .planning/PROJECT.md (updated 2026-09-17)
 
-**Core value:** A CICS transaction/program/map name, a DB2 table name, and an IDMS record + set
-name are each reachable as named AST nodes with accurate positions — because those nodes are what
-become graph edges.
-**Current focus:** Phase 04 — EXEC SQL Blocks
+**Core value:** Raw estate COBOL becomes a source-mapped, measurable AST whose graph-relevant
+identifiers remain accurate and whose degraded parses are routed for review rather than silently
+trusted.
+**Current focus:** Defining v0.26.0 Estate Parse Recovery requirements and roadmap
 
 ## Current Position
 
-Phase: 2 — IDMS DML Statement Nodes
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-09-14 — Phase 04 complete, transitioned to Phase 2
-
-Progress: [████████░░] 80% of Phase 4
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-09-17 — Milestone v0.26.0 started
 
 ## Performance Metrics
 
