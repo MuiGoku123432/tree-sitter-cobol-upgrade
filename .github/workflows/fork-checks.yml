@@ -37,3 +37,26 @@ jobs:
       # standing exclusion must be revisited rather than silently forgotten.
       - name: Run non-comment corpus fixtures
         run: node_modules/.bin/tree-sitter test -e '^comment$'
+
+      - name: Run differential adversarial self-test
+        run: ./run_accept_differential_selftest.sh
+
+      - name: Run exact IDMS query contract
+        run: ./run_idms_query_capture.sh
+
+      - name: Prove fail-closed portable shim refresh
+        run: ./forest-shim/refresh-selftest.sh
+
+      - name: Check source and shim IDMS query identity
+        run: cmp queries/idms.scm forest-shim/cobol/idms.scm
+
+      - name: Exercise the shim IDMS query contract
+        env:
+          IDMS_QUERY_FILE: ${{ github.workspace }}/forest-shim/cobol/idms.scm
+        run: ./run_idms_query_capture.sh
+
+      - name: Test embedded forest shim queries
+        working-directory: forest-shim/cobol
+        env:
+          IDMS_SOURCE_QUERY: ${{ github.workspace }}/queries/idms.scm
+        run: go test ./...
