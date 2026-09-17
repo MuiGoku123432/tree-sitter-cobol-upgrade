@@ -1533,7 +1533,7 @@ module.exports = grammar({
     ),
 
     idms_accept_statement: $ => seq(
-      $._ACCEPT,
+      field('verb', alias($._ACCEPT, $.ACCEPT)),
       $._idms_accept_body,
     ),
 

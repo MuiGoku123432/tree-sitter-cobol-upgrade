@@ -7768,8 +7768,17 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "_ACCEPT"
+          "type": "FIELD",
+          "name": "verb",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_ACCEPT"
+            },
+            "named": true,
+            "value": "ACCEPT"
+          }
         },
         {
           "type": "SYMBOL",

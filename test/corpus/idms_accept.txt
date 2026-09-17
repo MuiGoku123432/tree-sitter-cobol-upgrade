@@ -72,6 +72,7 @@ idms accept currency
       (program_name))
     (procedure_division
       (idms_accept_statement
+        verb: (ACCEPT)
         (qualified_word
           (WORD))
         (idms_record_name
@@ -94,6 +95,7 @@ idms accept currency without qualifier
       (program_name))
     (procedure_division
       (idms_accept_statement
+        verb: (ACCEPT)
         (qualified_word
           (WORD))
         (CURRENCY))
@@ -114,6 +116,7 @@ idms accept relative owner currency
       (program_name))
     (procedure_division
       (idms_accept_statement
+        verb: (ACCEPT)
         (qualified_word
           (WORD))
         (idms_record_name
@@ -137,6 +140,7 @@ idms accept unparsed tail
       (program_name))
     (procedure_division
       (idms_accept_statement
+        verb: (ACCEPT)
         (qualified_word
           (WORD))
         (idms_record_name

@@ -6227,7 +6227,18 @@
   {
     "type": "idms_accept_statement",
     "named": true,
-    "fields": {},
+    "fields": {
+      "verb": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "ACCEPT",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
@@ -16011,6 +16022,10 @@
   {
     "type": ">=",
     "named": false
+  },
+  {
+    "type": "ACCEPT",
+    "named": true
   },
   {
     "type": "AND_EQ",
