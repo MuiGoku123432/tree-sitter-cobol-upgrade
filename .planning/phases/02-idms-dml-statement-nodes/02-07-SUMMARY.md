@@ -16,7 +16,7 @@ provides:
 affects: [02-08, 02-09, 02-10, 02-11]
 
 actuals:
-  tokens: 11428
+  tokens: 9360
   tasks: 3
   commits: 3
 
